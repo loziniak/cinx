@@ -1,4 +1,4 @@
-package pl.robotix.cinx;
+package pl.robotix.cinx.graph;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,25 +19,16 @@ public abstract class MyAxis<T> extends Axis<T> {
 		upper = up;
 	}
 	
-	@Override
-	protected Object autoRange(double length) {
-		if (isAutoRanging()) {
-			throw new IllegalStateException("No auto range.");
-		}
-		return getRange();
+	
+	public void newRange(T low, T up) {
+		lower = low;
+		upper = up;
+		invalidateRange();
+//		layoutChildren(); // TODO: ??
 	}
-
-	@Override
-	protected void setRange(Object range, boolean animate) {
-		lower = ((List<T>) range).get(0);
-		upper = ((List<T>) range).get(1);
-	}
-
-	@Override
-	protected Object getRange() {
-		return Arrays.asList(lower, upper);
-	}
-
+	
+	
+	
 	@Override
 	public double getZeroPosition() {
 		if (!isValueOnAxis(toRealValue(0.0))) {
@@ -67,6 +58,25 @@ public abstract class MyAxis<T> extends Axis<T> {
 	public boolean isValueOnAxis(T value) {
 		return toNumericValue(lower) <= toNumericValue(value)
 				&& toNumericValue(upper) >= toNumericValue(value);
+	}
+	
+	@Override
+	protected Object autoRange(double length) {
+		if (isAutoRanging()) {
+			throw new IllegalStateException("No auto range.");
+		}
+		return getRange();
+	}
+
+	@Override
+	protected void setRange(Object range, boolean animate) {
+		lower = ((List<T>) range).get(0);
+		upper = ((List<T>) range).get(1);
+	}
+
+	@Override
+	protected Object getRange() {
+		return Arrays.asList(lower, upper);
 	}
 
 	@Override

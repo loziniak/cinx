@@ -4,12 +4,18 @@ import java.util.ArrayList;
 
 import javafx.collections.ObservableListBase;
 
-public class MyList<E> extends ObservableListBase<E> {
+public class ObservableArrayList<E> extends ObservableListBase<E> {
 	
 	private ArrayList<E> list = new ArrayList<>();
 	
+	@Override
 	public boolean add(E element) {
-		return list.add(element);
+		boolean res;
+		beginChange();
+		res = list.add(element);
+		nextAdd(list.size() - 1, list.size());
+		endChange();
+		return res;
 	}
 	
 	@Override
