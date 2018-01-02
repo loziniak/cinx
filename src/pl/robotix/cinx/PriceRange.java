@@ -15,5 +15,13 @@ public enum PriceRange {
 		this.periodSeconds = periodSeconds;
 		this.densitySeconds = densitySeconds;
 	}
+	
+	public long getStart() {
+		return App.NOW.getEpochSecond() - periodSeconds;
+	}
+	
+	public long getPointsCount() {
+		return periodSeconds / densitySeconds;
+	}
 
 }
