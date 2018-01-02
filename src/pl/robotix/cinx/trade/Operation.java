@@ -1,5 +1,9 @@
 package pl.robotix.cinx.trade;
 
-public class Operation {
+public interface Operation {
+	
+	public boolean canRollback();
+	
+	public void rollback();
 
 }

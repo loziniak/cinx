@@ -1,5 +1,5 @@
 package pl.robotix.cinx.trade;
 
-public class Buy extends Operation {
+public abstract class Buy implements Operation {
 
 }

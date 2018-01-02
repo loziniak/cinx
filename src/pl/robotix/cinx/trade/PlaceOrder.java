@@ -1,5 +1,5 @@
 package pl.robotix.cinx.trade;
 
-public class PlaceOrder extends Operation {
+public abstract class PlaceOrder implements Operation {
 
 }
