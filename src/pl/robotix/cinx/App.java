@@ -20,19 +20,24 @@ public class App extends Application {
 	
 	private static final String CONFIG_FILE = "./app.properties";
 
+	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
+	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
+
+	public static final Currency USDT = new Currency("USDT");
+	public static final Currency BTC = new Currency("BTC");
+	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		primaryStage.setTitle("Cinx");
 		
-		Api poloniex = new Api();
+		String poloniexApiKey = System.getenv(POLONIEX_APIKEY_ENV);
+		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
+		Api poloniex = new Api(poloniexApiKey, poloniexSecret);
 		
-		Config config = new Config(CONFIG_FILE);
 		Map<Pair, BigDecimal> prices = poloniex.getPrices();
 		if (prices != null) {
-			config.setPrices(prices);
 			poloniex.setPrices(new Prices(prices));
 		}
-		config.saveToDisk();
 		
 		Graph graph = new Graph();
 		Group root = new Group();
@@ -40,10 +45,25 @@ public class App extends Application {
 		primaryStage.setScene(new Scene(root));
 		primaryStage.show();
 
-		config.getSubscribedCurrencies().forEach((currency) -> {
+		Config config = new Config(CONFIG_FILE);
+		Map<Currency, BigDecimal> balance = balanceWithBTCAndUSDT(poloniex);
+		
+		balance.keySet().forEach((currency) -> {
+//		config.getSubscribedCurrencies().forEach((currency) -> {
 			List<Point> priceHistory = poloniex.getUSDPriceHistory(currency, MONTH);
 			graph.display(priceHistory, currency.symbol);
 		});
+	}
+
+	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT(Api poloniex) {
+		Map<Currency, BigDecimal> balance = poloniex.getUSDBalance();
+		if (!balance.containsKey(USDT)) {
+			balance.put(USDT, BigDecimal.valueOf(0.0));
+		}
+		if (!balance.containsKey(BTC)) {
+			balance.put(BTC, BigDecimal.valueOf(0.0));
+		}
+		return balance;
 	}
 	
 	

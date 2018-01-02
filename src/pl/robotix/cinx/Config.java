@@ -16,12 +16,10 @@ import java.util.Properties;
 
 public class Config {
 	
-	private static final String PRICES_KEY = "prices";
+//	private static final String PRICES_KEY = "prices";
 	private static final String SUBSCRIBED_CURRENCIES_KEY = "subscribed.currencies";
 	
-	
 	private Properties data;
-
 	private File file;
 
 	public Config(String configFile) throws IOException {
@@ -43,13 +41,13 @@ public class Config {
 		output.close();
 	}
 	
-	public void setPrices(Map<Pair, BigDecimal> prices) {
-		String pricesStr = prices.entrySet().stream()
-		.map((entry) -> entry.getKey() + ":" + entry.getValue()) 
-		.reduce((one, two) -> one + ";" + two)
-		.orElse(null);
-		data.put(PRICES_KEY, pricesStr);
-	}
+//	public void setPrices(Map<Pair, BigDecimal> prices) {
+//		String pricesStr = prices.entrySet().stream()
+//		.map((entry) -> entry.getKey() + ":" + entry.getValue()) 
+//		.reduce((one, two) -> one + ";" + two)
+//		.orElse(null);
+//		data.put(PRICES_KEY, pricesStr);
+//	}
 
 	public List<Currency> getSubscribedCurrencies() {
 		return Arrays.asList(data.getProperty(SUBSCRIBED_CURRENCIES_KEY).split(",")).stream()

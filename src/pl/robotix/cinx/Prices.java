@@ -1,5 +1,7 @@
 package pl.robotix.cinx;
 
+import static pl.robotix.cinx.App.USDT;
+
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Prices {
-	
-	private static final Currency USDT = new Currency("USDT");
 	
 	Map<Pair, BigDecimal> prices = new HashMap<>();
 	
@@ -22,6 +22,10 @@ public class Prices {
 	
 	
 	public BigDecimal getUSDFor(Currency currency) {
+		if (currency.equals(USDT)) {
+			return BigDecimal.ONE;
+		}
+		
 		BigDecimal foundPrice = prices.get(new Pair(USDT, currency));
 		if (foundPrice != null) {
 			return foundPrice;

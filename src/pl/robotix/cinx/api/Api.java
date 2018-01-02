@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import com.cf.client.poloniex.PoloniexExchangeService;
+import com.cf.data.model.poloniex.PoloniexCompleteBalance;
 import com.cf.data.model.poloniex.PoloniexTicker;
 
 import pl.robotix.cinx.Currency;
@@ -31,8 +32,8 @@ public class Api {
 	
 	private long lastOpMillis;
 	
-	public Api() {
-		service = new PoloniexExchangeService(null, null);
+	public Api(String poloniexApiKey, String poloniexSecret) {
+		service = new PoloniexExchangeService(poloniexApiKey, poloniexSecret);
 		lastOpMillis = System.currentTimeMillis();
 	}
 	
@@ -82,6 +83,19 @@ public class Api {
 		});
 		
 		return usdPriceHistory;
+	}
+	
+	public Map<Currency, BigDecimal> getUSDBalance() {
+		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
+		Map<String, PoloniexCompleteBalance> balanceData = service.returnBalance(false);
+		balanceData.entrySet().forEach((entry) -> {
+			Currency currency = new Currency(entry.getKey());
+			usdBalance.put(currency,
+				prices.getUSDFor(currency).multiply(entry.getValue().available.add(entry.getValue().onOrders))
+				);
+		});
+		
+		return usdBalance;
 	}
 
 
