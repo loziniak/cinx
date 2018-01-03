@@ -1,6 +1,6 @@
 package pl.robotix.cinx;
 
-import static pl.robotix.cinx.PriceRange.MONTH;
+import static pl.robotix.cinx.TimeRange.MONTH;
 
 import java.math.BigDecimal;
 import java.time.Instant;

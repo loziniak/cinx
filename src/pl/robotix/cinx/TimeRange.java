@@ -1,6 +1,6 @@
 package pl.robotix.cinx;
 
-public enum PriceRange {
+public enum TimeRange {
 	
 	DAY(24 * 60 * 60, 5 * 60),
 	WEEK(7 * DAY.periodSeconds, 30 * 60),
@@ -11,7 +11,7 @@ public enum PriceRange {
 	
 	public final long densitySeconds;
 	
-	private PriceRange(long periodSeconds, long densitySeconds) {
+	private TimeRange(long periodSeconds, long densitySeconds) {
 		this.periodSeconds = periodSeconds;
 		this.densitySeconds = densitySeconds;
 	}

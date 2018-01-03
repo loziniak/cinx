@@ -20,7 +20,7 @@ import com.cf.data.model.poloniex.PoloniexTicker;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Point;
-import pl.robotix.cinx.PriceRange;
+import pl.robotix.cinx.TimeRange;
 import pl.robotix.cinx.Prices;
 
 public class Api {
@@ -40,7 +40,7 @@ public class Api {
 	}
 	
 	
-	public List<Point> retrieveUSDPriceHistory(Currency currency, PriceRange range) {
+	public List<Point> retrieveUSDPriceHistory(Currency currency, TimeRange range) {
 		List<Point> usdPriceHistory = initWithOnes(range);
 		
 		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
@@ -89,7 +89,7 @@ public class Api {
 	}
 
 
-	private List<Point> initWithOnes(PriceRange range) {
+	private List<Point> initWithOnes(TimeRange range) {
 		List<Point> usdPriceHistory = new LinkedList<>();
 		long start = range.getStart();
 		for (int i=0; i < range.getPointsCount(); i++) {
@@ -101,7 +101,7 @@ public class Api {
 		return usdPriceHistory;
 	}
 	
-    private List<Point> retrievePriceHistory(Pair pair, PriceRange range) {
+    private List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
         throttleControl();
         
         return service.returnChartData(pair.toString(), range.densitySeconds, range.getStart())
