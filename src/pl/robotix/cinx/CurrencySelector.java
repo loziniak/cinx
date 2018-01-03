@@ -1,13 +1,14 @@
 package pl.robotix.cinx;
 
 import static pl.robotix.cinx.App.USDT;
-import static pl.robotix.cinx.TimeRange.MONTH;
+import static pl.robotix.cinx.TimeRange.DAY;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
@@ -23,12 +24,12 @@ public class CurrencySelector {
 	public CurrencySelector() {
 	}
 	
-	public void addDisplatListener(Api api, Graph graph) {
+	public void addDisplayListener(Api api, Graph graph) {
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {
 			if (change.wasAdded()) {
 				Currency added = change.getElementAdded();
 				if (!added.equals(USDT)) {
-					List<Point> priceHistory = api.retrieveUSDPriceHistory(added, MONTH);
+					List<Point> priceHistory = api.retrieveUSDPriceHistory(added, DAY);
 					graph.display(priceHistory, added);
 				}
 			}
@@ -54,13 +55,31 @@ public class CurrencySelector {
 	
 	private ToggleButton currencyButton(final Currency currency, WalletCurrencies wallet) {
 		final ToggleButton button = new ToggleButton(currency.symbol);
-		button.selectedProperty().addListener((selected) -> {
-			if (((BooleanProperty) selected).get()) {
-				chartCurrencies.add(currency);
-			} else {
-				chartCurrencies.remove(currency);
+		
+		button.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			private boolean bypass = false;
+
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				if (bypass) {
+					return;
+				}
+
+				boolean selected = newValue.booleanValue(); 
+				if (selected) {
+					chartCurrencies.add(currency);
+				} else {
+					if (wallet.canRemove(currency)) {
+						chartCurrencies.remove(currency);
+					} else {
+						bypass = true;
+						button.selectedProperty().set(true);
+						bypass = false;
+					}
+				}
 			}
 		});
+		
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {
 			Currency added = change.getElementAdded();
 			Currency removed = change.getElementRemoved();

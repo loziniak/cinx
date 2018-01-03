@@ -7,8 +7,12 @@ import java.util.Map;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.graph.Graph;
@@ -41,16 +45,32 @@ public class App extends Application {
 		
 		wallet = new WalletCurrencies(balanceWithBTCAndUSDT());
 
-		layoutUi(primaryStage);
+		layout(primaryStage);
 
-		currencies.addDisplatListener(api, graph);
+		currencies.addDisplayListener(api, graph);
 
 		currencies.addAll(wallet.getCurrencies());
 		Config config = new Config(CONFIG_FILE);
 		currencies.addAll(config.getSubscribedCurrencies());
 	}
 	
-	private void layoutUi(Stage stage) {
+	private void layout(Stage stage) {
+		Tab trade = new Tab("Trade");
+		trade.setClosable(false);
+		trade.setContent(new Text("TRADE"));
+		
+		Tab analyze = new Tab("Analzye");
+		analyze.setClosable(false);
+		analyze.setContent(analyzeLayout(trade));
+
+		TabPane tabs = new TabPane();
+		tabs.getTabs().addAll(analyze, trade);
+
+		stage.setScene(new Scene(tabs));
+		stage.show();
+	}
+
+	private VBox analyzeLayout(Tab trade) {
 		HBox top = new HBox();
 		top.getChildren().add(graph.getChart());
 		
@@ -58,15 +78,22 @@ public class App extends Application {
 		sliders.setPadding(new Insets(20));
 		sliders.setSpacing(10);
 		wallet.setSlidersPane(sliders);
-		top.getChildren().add(sliders);
+
+		VBox topRight = new VBox(20);
+		topRight.getChildren().add(sliders);
+		
+		Button generateOperations = new Button("Generate operations");
+		generateOperations.setOnAction((event) -> {
+			trade.getTabPane().getSelectionModel().select(trade);
+		});
+		topRight.getChildren().add(generateOperations);
+		top.getChildren().add(topRight);
 
 		VBox outer = new VBox();
 		outer.getChildren().add(top);
 		outer.getChildren().add(currencies.buttons(api, wallet));
 		outer.setPadding(new Insets(10));
-		
-		stage.setScene(new Scene(outer));
-		stage.show();		
+		return outer;
 	}
 	
 	

@@ -24,6 +24,7 @@ public class Graph {
 			LocalDateTime.now().minusDays(0));
 	
 	public Graph() {
+		percents.setAutoRanging(true);
 		chart = new LineChart<>(dates, percents);
 		chart.setCreateSymbols(false);
 		chart.setData(series);

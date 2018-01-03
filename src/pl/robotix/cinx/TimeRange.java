@@ -17,7 +17,7 @@ public enum TimeRange {
 	}
 	
 	public long getStart() {
-		return App.NOW.getEpochSecond() - periodSeconds;
+		return System.currentTimeMillis() / 1000 - periodSeconds;
 	}
 	
 	public long getPointsCount() {

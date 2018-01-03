@@ -41,15 +41,19 @@ public class WalletCurrencies {
 	}
 
 	private void add(Currency c, double usd) {
-		WalletSlider slider = new WalletSlider(c, walletUSD);
+		WalletSlider slider = new WalletSlider(c, walletUSD, usd);
 		if (sliders.putIfAbsent(c, slider) == null) {
-			slider.setPercent(100.0 * usd / this.walletUSD);
 			slider.setPercentChangeHandler(onPercentChange);
 		}
 	}
 	
 	public void add(Currency c) {
 		this.add(c, 0.0);
+	}
+	
+	public boolean canRemove(Currency c) {
+		WalletSlider slider = sliders.get(c);
+		return slider != null && slider.getPercent() == 0.0;
 	}
 	
 	public void remove(Currency c) {
@@ -113,6 +117,14 @@ public class WalletCurrencies {
 	
 	public Set<Currency> getCurrencies() {
 		return sliders.keySet();
+	}
+	
+	public Map<Currency, Double> getPercentChanges() {
+		Map<Currency, Double> percentChanges = new HashMap<>();
+		sliders.forEach((c, s) -> {
+			percentChanges.put(c, s.getPercentChange());
+		});
+		return percentChanges;
 	}
 	
 	
