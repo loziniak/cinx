@@ -29,14 +29,18 @@ public class PricesTest {
 		prices.put(USDT_ETH, valueOf(1.2));
 		prices.put(ETH_LTC, valueOf(1.1));
 		
+		Map<Pair, BigDecimal> volumes = new HashMap<>();
+		volumes.put(USDT_ETH, valueOf(100));
+		volumes.put(ETH_LTC, valueOf(0.200));
+		
 		Assert.assertEquals(valueOf(1.32),
-				new Prices(prices).getUSDFor(LTC));
+				new Prices(prices, volumes).getUSDFor(LTC));
 		
 		Assert.assertEquals(Arrays.asList(ETH_LTC, USDT_ETH),
-				new Prices(prices).pairsToComputeUSDFor(LTC));
+				new Prices(prices, volumes).pairsToComputeUSDFor(LTC));
 
 		Assert.assertEquals(Arrays.asList(new Pair[] {}),
-				new Prices(prices).pairsToComputeUSDFor(USDT));
+				new Prices(prices, volumes).pairsToComputeUSDFor(USDT));
 
 	}
 

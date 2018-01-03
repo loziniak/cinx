@@ -1,5 +1,7 @@
 package pl.robotix.cinx;
 
+import java.util.Comparator;
+
 public class Currency {
 	
 	public final String symbol;
@@ -25,6 +27,10 @@ public class Currency {
 	@Override
 	public int hashCode() {
 		return symbol.hashCode();
+	}
+	
+	public static Comparator<Currency> bySymbol() {
+		return Comparator.comparing((Currency c) -> { return c.symbol; });
 	}
 
 }

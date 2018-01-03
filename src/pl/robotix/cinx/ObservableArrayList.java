@@ -19,6 +19,16 @@ public class ObservableArrayList<E> extends ObservableListBase<E> {
 	}
 	
 	@Override
+	public E remove(int index) {
+		E res;
+		beginChange();
+		res = list.remove(index);
+		nextRemove(index, res);
+		endChange();
+		return res;
+	}
+	
+	@Override
 	public E get(int index) {
 		return list.get(index);
 	}

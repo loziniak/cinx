@@ -1,6 +1,7 @@
 package pl.robotix.cinx.api;
 
 import static java.util.stream.Collectors.toList;
+import static pl.robotix.cinx.App.USDT;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,32 +36,21 @@ public class Api {
 	public Api(String poloniexApiKey, String poloniexSecret) {
 		service = new PoloniexExchangeService(poloniexApiKey, poloniexSecret);
 		lastOpMillis = System.currentTimeMillis();
+		prices = retrievePrices();
 	}
 	
 	
-	public Map<Pair, BigDecimal> getPrices() {
-		throttleControl();
-		
-		Map<Pair, BigDecimal> prices = new HashMap<>();
-		Map<String, PoloniexTicker> tickerAll = service.returnTicker();
-		tickerAll.forEach((pairSymbol, tickerOne) -> {
-			prices.put(new Pair(pairSymbol), tickerOne.last);
-		});
-		
-		return prices;
-	}
-	
-	public List<Point> getUSDPriceHistory(Currency currency, PriceRange range) {
+	public List<Point> retrieveUSDPriceHistory(Currency currency, PriceRange range) {
 		List<Point> usdPriceHistory = initWithOnes(range);
 		
 		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
 		pairs.forEach((intermediatePair) -> {
-			List<Point> intermediateHistory = getPriceHistory(intermediatePair, range);
+			List<Point> intermediateHistory = retrievePriceHistory(intermediatePair, range);
 
-			if (Math.abs(intermediateHistory.size() / usdPriceHistory.size() - 1) > 0.01) {
+			if (Math.abs((double) intermediateHistory.size() / usdPriceHistory.size() - 1.0) > 0.01) {
 				throw new IllegalStateException("Price history sizes differ too much. "
 						+ intermediatePair + ":" + intermediateHistory.size() + ", "
-						+ "USDT_" + currency + ": " + usdPriceHistory.size());
+						+ new Pair(USDT, currency) + ": " + usdPriceHistory.size());
 			}
 
 			Iterator<Point> intermediateIterator = intermediateHistory.iterator();
@@ -85,7 +75,7 @@ public class Api {
 		return usdPriceHistory;
 	}
 	
-	public Map<Currency, BigDecimal> getUSDBalance() {
+	public Map<Currency, BigDecimal> retrieveUSDBalance() {
 		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
 		Map<String, PoloniexCompleteBalance> balanceData = service.returnBalance(false);
 		balanceData.entrySet().forEach((entry) -> {
@@ -111,7 +101,7 @@ public class Api {
 		return usdPriceHistory;
 	}
 	
-    private List<Point> getPriceHistory(Pair pair, PriceRange range) {
+    private List<Point> retrievePriceHistory(Pair pair, PriceRange range) {
         throttleControl();
         
         return service.returnChartData(pair.toString(), range.densitySeconds, range.getStart())
@@ -121,6 +111,20 @@ public class Api {
         }).collect(toList());
     }
     
+	private Prices retrievePrices() {
+		throttleControl();
+		
+		Map<Pair, BigDecimal> prices = new HashMap<>();
+		Map<Pair, BigDecimal> volumes = new HashMap<>();
+		Map<String, PoloniexTicker> tickerAll = service.returnTicker();
+		tickerAll.forEach((pairSymbol, tickerOne) -> {
+			prices.put(new Pair(pairSymbol), tickerOne.last);
+			volumes.put(new Pair(pairSymbol), tickerOne.baseVolume);
+		});
+		
+		return new Prices(prices, volumes);
+	}
+	
 	
 	private void throttleControl() {
 		try {
@@ -134,8 +138,8 @@ public class Api {
 	}
 	
 	
-	public void setPrices(Prices prices) {
-		this.prices = prices;
+	public Prices getPrices() {
+		return prices;
 	}
 
 }

@@ -1,23 +1,35 @@
 package pl.robotix.cinx;
 
+import static java.util.Collections.reverseOrder;
+import static java.util.Comparator.comparing;
 import static pl.robotix.cinx.App.USDT;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class Prices {
 	
-	Map<Pair, BigDecimal> prices = new HashMap<>();
+	private Map<Pair, BigDecimal> prices = new HashMap<>();
+	private final Map<Currency, BigDecimal> volumes = new HashMap<>();
 	
 	public Prices() {
 	}
 	
-	public Prices(Map<Pair, BigDecimal> prices) {
+	public Prices(Map<Pair, BigDecimal> prices, Map<Pair, BigDecimal> pairVolumes) {
 		this.prices.putAll(prices);
+		
+		pairVolumes.entrySet().forEach((entry) -> {
+			addToVolumes(entry);
+		});
 	}
 	
 	
@@ -50,6 +62,10 @@ public class Prices {
 	}
 
 	public List<Pair> pairsToComputeUSDFor(final Currency currency) {
+		if (currency.equals(USDT)) {
+			return Collections.emptyList();
+		}
+		
 		Pair currToUsd = new Pair(USDT, currency);
 		BigDecimal foundPrice = prices.get(currToUsd);
 		if (foundPrice != null) {
@@ -70,5 +86,41 @@ public class Prices {
 		
 		return pairsHolder;
 	}
+	
+	public Set<Currency> getAllCurrencies() {
+		Set<Currency> currencies = new HashSet<>();
+		prices.keySet().forEach((pair) -> {
+			currencies.add(pair.base);
+			currencies.add(pair.quote);
+		});
+		return currencies;
+	}
+	
+	public Comparator<Currency> byVolume() {
+		return reverseOrder(comparing((Currency c) -> { return volumes.get(c); }));
+	}
+
+	
+	private void addToVolumes(Entry<Pair, BigDecimal> entry) {
+		Currency base = entry.getKey().base;
+		Currency quote = entry.getKey().quote;
+		BigDecimal baseVolume = entry.getValue();
+		BigDecimal usdBaseVolume = baseVolume.multiply(getUSDFor(quote));
+
+		BigDecimal volumeSum = volumes.get(base);
+		if (volumeSum == null) {
+			volumes.put(base, usdBaseVolume);
+		} else {
+			volumes.put(base, volumeSum.add(usdBaseVolume));
+		}
+		
+		BigDecimal quoteVolumeSum = volumes.get(quote);
+		if (quoteVolumeSum == null) {
+			volumes.put(quote, usdBaseVolume);
+		} else {
+			volumes.put(quote, quoteVolumeSum.add(usdBaseVolume));
+		}
+	}
+	
 
 }
