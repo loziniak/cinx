@@ -5,13 +5,14 @@ import static pl.robotix.cinx.PriceRange.MONTH;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javafx.application.Application;
 import javafx.beans.property.BooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener.Change;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ToggleButton;
@@ -34,7 +35,7 @@ public class App extends Application {
 	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
 	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
 
-	public Set<Currency> currencies = new HashSet<>();
+	public ObservableSet<Currency> currencies = FXCollections.observableSet();
 
 	private Api api;
 	private Graph graph = new Graph();
@@ -50,58 +51,71 @@ public class App extends Application {
 		Config config = new Config(CONFIG_FILE);
 		Map<Currency, BigDecimal> balance = balanceWithBTCAndUSDT();
 
-		currencies.addAll(balance.keySet());
-		currencies.addAll(config.getSubscribedCurrencies());
-		
 		layoutUi(primaryStage);
 
-		currencies.forEach((currency) -> display(currency));
+		currencies.addListener((Change<? extends Currency> change) -> {
+			if (change.wasAdded()) {
+				Currency added = change.getElementAdded();
+				List<Point> priceHistory = api.retrieveUSDPriceHistory(added, MONTH);
+				graph.display(priceHistory, added);
+			}
+			if (change.wasRemoved()) {
+				graph.remove(change.getElementRemoved());
+			}
+		});
+
+		currencies.addAll(balance.keySet());
+		currencies.addAll(config.getSubscribedCurrencies());
 	}
 	
 	private void layoutUi(Stage stage) {
-//		Group root = new Group();
-//		root.getChildren().add(graph.getChart());
-		
-		VBox outer = new VBox();
 		HBox top = new HBox();
+		top.getChildren().add(graph.getChart());
+
+		VBox outer = new VBox();
 		outer.getChildren().add(top);
+		outer.getChildren().add(currencyButtons());
+		
+		stage.setScene(new Scene(outer));
+		stage.show();		
+	}
+	
+	
+
+	private FlowPane currencyButtons() {
 		FlowPane currencies = new FlowPane();
 		currencies.setVgap(5);
 		currencies.setHgap(5);
-		outer.getChildren().add(currencies);
 		
 		List<Currency> currencyList = new ArrayList<>(api.getPrices().getAllCurrencies());
 		currencyList.sort(api.getPrices().byVolume());
 		for (Currency c: currencyList) {
 			currencies.getChildren().add(currencyButton(c));
 		}
-		
-		top.getChildren().add(graph.getChart());
-		
-		stage.setScene(new Scene(outer));
-		stage.show();		
+		return currencies;
 	}
 	
-	private Node currencyButton(Currency currency) {
-		ToggleButton button = new ToggleButton(currency.symbol);
-		if (currencies.contains(currency)) {
-			button.setSelected(true);
-		}
+	private ToggleButton currencyButton(final Currency currency) {
+		final ToggleButton button = new ToggleButton(currency.symbol);
 		button.selectedProperty().addListener((selected) -> {
 			if (((BooleanProperty) selected).get()) {
 				currencies.add(currency);
-				display(currency);
 			} else {
 				currencies.remove(currency);
-				graph.remove(currency);
+			}
+		});
+		currencies.addListener((Change<? extends Currency> change) -> {
+			Currency added = change.getElementAdded();
+			Currency removed = change.getElementRemoved();
+
+			if (change.wasAdded() && added.equals(currency) && !button.isSelected()) {
+				button.setSelected(true);
+			}
+			if (change.wasRemoved() && removed.equals(currency) && button.isSelected()) {
+				button.setSelected(false);
 			}
 		});
 		return button;
-	}
-
-	private void display(Currency currency) {
-		List<Point> priceHistory = api.retrieveUSDPriceHistory(currency, MONTH);
-		graph.display(priceHistory, currency);
 	}
 
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
