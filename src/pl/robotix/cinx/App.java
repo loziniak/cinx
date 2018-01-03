@@ -13,7 +13,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
-import javafx.scene.Node;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
@@ -35,10 +35,11 @@ public class App extends Application {
 	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
 	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
 
-	public ObservableSet<Currency> currencies = FXCollections.observableSet();
+	public ObservableSet<Currency> chartCurrencies = FXCollections.observableSet();
 
 	private Api api;
 	private Graph graph = new Graph();
+	private WalletCurrencies wallet;
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -48,33 +49,42 @@ public class App extends Application {
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
 		api = new Api(poloniexApiKey, poloniexSecret);
 		
-		Config config = new Config(CONFIG_FILE);
-		Map<Currency, BigDecimal> balance = balanceWithBTCAndUSDT();
+		wallet = new WalletCurrencies(balanceWithBTCAndUSDT());
 
 		layoutUi(primaryStage);
-
-		currencies.addListener((Change<? extends Currency> change) -> {
+		
+		chartCurrencies.addListener((Change<? extends Currency> change) -> {
 			if (change.wasAdded()) {
 				Currency added = change.getElementAdded();
-				List<Point> priceHistory = api.retrieveUSDPriceHistory(added, MONTH);
-				graph.display(priceHistory, added);
+				if (!added.equals(USDT)) {
+					List<Point> priceHistory = api.retrieveUSDPriceHistory(added, MONTH);
+					graph.display(priceHistory, added);
+				}
 			}
 			if (change.wasRemoved()) {
 				graph.remove(change.getElementRemoved());
 			}
 		});
 
-		currencies.addAll(balance.keySet());
-		currencies.addAll(config.getSubscribedCurrencies());
+		chartCurrencies.addAll(wallet.getCurrencies());
+		Config config = new Config(CONFIG_FILE);
+		chartCurrencies.addAll(config.getSubscribedCurrencies());
 	}
 	
 	private void layoutUi(Stage stage) {
 		HBox top = new HBox();
 		top.getChildren().add(graph.getChart());
+		
+		HBox sliders = new HBox();
+		sliders.setPadding(new Insets(20));
+		sliders.setSpacing(10);
+		wallet.setSlidersPane(sliders);
+		top.getChildren().add(sliders);
 
 		VBox outer = new VBox();
 		outer.getChildren().add(top);
 		outer.getChildren().add(currencyButtons());
+		outer.setPadding(new Insets(10));
 		
 		stage.setScene(new Scene(outer));
 		stage.show();		
@@ -99,20 +109,26 @@ public class App extends Application {
 		final ToggleButton button = new ToggleButton(currency.symbol);
 		button.selectedProperty().addListener((selected) -> {
 			if (((BooleanProperty) selected).get()) {
-				currencies.add(currency);
+				chartCurrencies.add(currency);
 			} else {
-				currencies.remove(currency);
+				chartCurrencies.remove(currency);
 			}
 		});
-		currencies.addListener((Change<? extends Currency> change) -> {
+		chartCurrencies.addListener((Change<? extends Currency> change) -> {
 			Currency added = change.getElementAdded();
 			Currency removed = change.getElementRemoved();
 
-			if (change.wasAdded() && added.equals(currency) && !button.isSelected()) {
-				button.setSelected(true);
+			if (change.wasAdded() && added.equals(currency)) {
+				if (!button.isSelected()) {
+					button.setSelected(true);
+				}
+				wallet.add(currency);
 			}
-			if (change.wasRemoved() && removed.equals(currency) && button.isSelected()) {
-				button.setSelected(false);
+			if (change.wasRemoved() && removed.equals(currency)) {
+				if (button.isSelected()) {
+					button.setSelected(false);
+				}
+				wallet.remove(currency);
 			}
 		});
 		return button;
