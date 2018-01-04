@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
+import pl.robotix.cinx.Currency;
 
 public class WalletSlider extends VBox {
 
@@ -24,12 +25,15 @@ public class WalletSlider extends VBox {
 		@Override public Double fromString(String label) { return new Double(label); }
 	};
 	
-	private Slider slider = new Slider();
+	private final Currency currency;
+	
+	private final Slider slider = new Slider();
 
-	private Label percentChange = new Label(String.format("%+.1f", 0.0));
+	private final Label percentChange = new Label(String.format("%+.1f", 0.0));
 	
 	public WalletSlider(WalletEntry s) {
 		super();
+		currency = s.getCurrency();
 		
 		getChildren().add(new Text(s.getCurrency().symbol));
 		getChildren().add(percentChange);
@@ -63,15 +67,22 @@ public class WalletSlider extends VBox {
 
 	public void disable() {
 		slider.setDisable(true);
-//		slider.setMouseTransparent(true);
 		slider.addEventFilter(MouseEvent.MOUSE_DRAGGED, DRAG_FILTER);
 	}
 
 	public void enable() {
 		slider.setDisable(false);
-//		slider.setMouseTransparent(false);
 		slider.removeEventFilter(MouseEvent.MOUSE_DRAGGED, DRAG_FILTER);
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof WalletSlider && ((WalletSlider) obj).currency.equals(this.currency);
+	}
+	
+	@Override
+	public int hashCode() {
+		return currency.hashCode();
+	}
 
 }

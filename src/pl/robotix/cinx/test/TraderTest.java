@@ -38,7 +38,7 @@ public class TraderTest {
 		
 		System.out.println(wallet.getPercentChanges());
 		
-		new Trader().generateOperations(null, wallet);
+		new Trader(null, wallet).generateOperations();
 //		expected output:
 //		A<-->B: -6,00000000
 //		A<-->D: -1,00000000

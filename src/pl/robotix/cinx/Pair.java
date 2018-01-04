@@ -1,6 +1,11 @@
 package pl.robotix.cinx;
 
+import static pl.robotix.cinx.Currency.BTC;
+import static pl.robotix.cinx.Currency.USDT;
+
 public class Pair {
+	
+	public static final Pair USDT_BTC = new Pair(USDT, BTC);
 	
 	/**
 	 * e.g. USDT
@@ -26,6 +31,9 @@ public class Pair {
 		this.base = base;
 	}
 
+	public Pair reverse() {
+		return new Pair(base, quote);
+	}
 
 	@Override
 	public String toString() {

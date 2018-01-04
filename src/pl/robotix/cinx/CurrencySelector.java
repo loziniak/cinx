@@ -1,6 +1,6 @@
 package pl.robotix.cinx;
 
-import static pl.robotix.cinx.App.USDT;
+import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.TimeRange.DAY;
 
 import java.util.ArrayList;

@@ -109,6 +109,9 @@ public class Wallet {
 		onPercentChange.enable();
 	}
 	
+	public double getWalletUSD() {
+		return walletUSD;
+	}
 	
 	private final class PercentChangeConsumer implements BiConsumer<Double, WalletEntry> {
 		

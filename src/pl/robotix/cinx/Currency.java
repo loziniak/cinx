@@ -4,6 +4,9 @@ import java.util.Comparator;
 
 public class Currency {
 	
+	public static final Currency USDT = new Currency("USDT");
+	public static final Currency BTC = new Currency("BTC");
+
 	public final String symbol;
 
 	public Currency(String symbol) {

@@ -1,10 +1,13 @@
 package pl.robotix.cinx;
 
+import static java.math.BigDecimal.ONE;
 import static java.util.Collections.reverseOrder;
 import static java.util.Comparator.comparing;
-import static pl.robotix.cinx.App.USDT;
+import static pl.robotix.cinx.Currency.BTC;
+import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,11 +24,15 @@ public class Prices {
 	private Map<Pair, BigDecimal> prices = new HashMap<>();
 	private final Map<Currency, BigDecimal> volumes = new HashMap<>();
 	
-	public Prices() {
-	}
-	
 	public Prices(Map<Pair, BigDecimal> prices, Map<Pair, BigDecimal> pairVolumes) {
 		this.prices.putAll(prices);
+		prices.forEach((pair, price) -> {
+			try {
+				this.prices.put(pair.reverse(), ONE.divide(price, MathContext.DECIMAL64));
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+		});
 		
 		pairVolumes.entrySet().forEach((entry) -> {
 			addToVolumes(entry);
@@ -34,31 +41,20 @@ public class Prices {
 	
 	
 	public BigDecimal getUSDFor(Currency currency) {
-		if (currency.equals(USDT)) {
-			return BigDecimal.ONE;
+		return getRate(new Pair(USDT, currency));
+	}
+	
+	public BigDecimal getRate(Pair pair) {
+		if (pair.base.equals(pair.quote)) {
+			return ONE;
 		}
 		
-		BigDecimal foundPrice = prices.get(new Pair(USDT, currency));
+		BigDecimal foundPrice = prices.get(pair);
 		if (foundPrice != null) {
 			return foundPrice;
 		}
 		
-		final LinkedList<BigDecimal> priceHolder = new LinkedList<BigDecimal>();
-		prices.forEach((pair, price) -> {
-			if (priceHolder.isEmpty() && pair.base.equals(currency)) {
-				Currency secondCurrency = pair.quote;
-				BigDecimal secondPrice = getUSDFor(secondCurrency);
-				if (secondPrice != null) {
-					priceHolder.add(price.multiply(secondPrice));
-				}
-			}
-		});
-		
-		if (priceHolder.size() > 0) {
-			foundPrice = priceHolder.get(0);
-		}
-		
-		return foundPrice;
+		return getRate(new Pair(pair.quote, BTC)  ).multiply(  getRate(new Pair(BTC, pair.base)));
 	}
 
 	public List<Pair> pairsToComputeUSDFor(final Currency currency) {
@@ -121,6 +117,5 @@ public class Prices {
 			volumes.put(quote, quoteVolumeSum.add(usdBaseVolume));
 		}
 	}
-	
 
 }

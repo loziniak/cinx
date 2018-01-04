@@ -1,5 +1,8 @@
 package pl.robotix.cinx;
 
+import static pl.robotix.cinx.Currency.BTC;
+import static pl.robotix.cinx.Currency.USDT;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -16,15 +19,13 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.graph.Graph;
+import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
 import pl.robotix.cinx.wallet.WalletUI;
 
 public class App extends Application {
 	
 	public static final Instant NOW = Instant.now();
-	
-	public static final Currency USDT = new Currency("USDT");
-	public static final Currency BTC = new Currency("BTC");
 	
 	private static final String CONFIG_FILE = "./app.properties";
 
@@ -86,6 +87,8 @@ public class App extends Application {
 		Button generateOperations = new Button("Generate operations");
 		generateOperations.setOnAction((event) -> {
 			trade.getTabPane().getSelectionModel().select(trade);
+			api.refreshPrices();
+			new Trader(api, wallet).generateOperations();
 		});
 		topRight.getChildren().add(generateOperations);
 		top.getChildren().add(topRight);
@@ -99,7 +102,7 @@ public class App extends Application {
 	
 	
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
-		Map<Currency, BigDecimal> balance = api.retrieveUSDBalance();
+		Map<Currency, BigDecimal> balance = api.retrieveUSDBalanceMock();
 		if (!balance.containsKey(USDT)) {
 			balance.put(USDT, BigDecimal.valueOf(0.0));
 		}

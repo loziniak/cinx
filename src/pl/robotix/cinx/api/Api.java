@@ -1,7 +1,9 @@
 package pl.robotix.cinx.api;
 
+import static java.math.BigDecimal.valueOf;
 import static java.util.stream.Collectors.toList;
-import static pl.robotix.cinx.App.USDT;
+import static pl.robotix.cinx.Currency.BTC;
+import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,8 +22,8 @@ import com.cf.data.model.poloniex.PoloniexTicker;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Point;
-import pl.robotix.cinx.TimeRange;
 import pl.robotix.cinx.Prices;
+import pl.robotix.cinx.TimeRange;
 
 public class Api {
 	
@@ -47,11 +49,11 @@ public class Api {
 		pairs.forEach((intermediatePair) -> {
 			List<Point> intermediateHistory = retrievePriceHistory(intermediatePair, range);
 
-			if (Math.abs((double) intermediateHistory.size() / usdPriceHistory.size() - 1.0) > 0.01) {
-				throw new IllegalStateException("Price history sizes differ too much. "
-						+ intermediatePair + ":" + intermediateHistory.size() + ", "
-						+ new Pair(USDT, currency) + ": " + usdPriceHistory.size());
-			}
+//			if (Math.abs((double) intermediateHistory.size() / usdPriceHistory.size() - 1.0) > 0.01) {
+//				throw new IllegalStateException("Price history sizes differ too much. "
+//						+ intermediatePair + ":" + intermediateHistory.size() + ", "
+//						+ new Pair(USDT, currency) + ": " + usdPriceHistory.size());
+//			}
 
 			Iterator<Point> intermediateIterator = intermediateHistory.iterator();
 			Point intermediatePoint = null;
@@ -84,6 +86,15 @@ public class Api {
 				prices.getUSDFor(currency).multiply(entry.getValue().available.add(entry.getValue().onOrders))
 				);
 		});
+		
+		return usdBalance;
+	}
+	
+	public Map<Currency, BigDecimal> retrieveUSDBalanceMock() {
+		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
+		usdBalance.put(USDT, valueOf(1000.0));
+		usdBalance.put(BTC, valueOf(2500.0));
+		usdBalance.put(new Currency("MAID"), valueOf(700.0));
 		
 		return usdBalance;
 	}
