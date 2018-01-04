@@ -16,6 +16,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.graph.Graph;
+import pl.robotix.cinx.wallet.Wallet;
+import pl.robotix.cinx.wallet.WalletUI;
 
 public class App extends Application {
 	
@@ -32,7 +34,7 @@ public class App extends Application {
 
 	private Api api;
 	private Graph graph = new Graph();
-	private WalletCurrencies wallet;
+	private Wallet wallet;
 	private CurrencySelector currencies = new CurrencySelector();
 	
 	@Override
@@ -43,7 +45,7 @@ public class App extends Application {
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
 		api = new Api(poloniexApiKey, poloniexSecret);
 		
-		wallet = new WalletCurrencies(balanceWithBTCAndUSDT());
+		wallet = new Wallet(balanceWithBTCAndUSDT());
 
 		layout(primaryStage);
 
@@ -74,13 +76,12 @@ public class App extends Application {
 		HBox top = new HBox();
 		top.getChildren().add(graph.getChart());
 		
-		HBox sliders = new HBox();
-		sliders.setPadding(new Insets(20));
-		sliders.setSpacing(10);
-		wallet.setSlidersPane(sliders);
-
+		WalletUI walletUI = new WalletUI(wallet);
+		walletUI.setPadding(new Insets(20));
+		walletUI.setSpacing(10);
+		
 		VBox topRight = new VBox(20);
-		topRight.getChildren().add(sliders);
+		topRight.getChildren().add(walletUI);
 		
 		Button generateOperations = new Button("Generate operations");
 		generateOperations.setOnAction((event) -> {

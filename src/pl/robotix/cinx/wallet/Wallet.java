@@ -1,4 +1,4 @@
-package pl.robotix.cinx;
+package pl.robotix.cinx.wallet;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -6,34 +6,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener.Change;
-import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javafx.scene.Node;
-import javafx.scene.layout.Pane;
+import pl.robotix.cinx.Currency;
 
-public class WalletCurrencies {
+public class Wallet {
 	
 	private final PercentChangeConsumer onPercentChange = new PercentChangeConsumer();
 			
 	private final double walletUSD;
 	
-	private ObservableMap<Currency, WalletSlider> sliders;
-	
-	private boolean paneIsSet = false;
+	final ObservableMap<Currency, WalletSlider> sliders;
 	
 
-	public WalletCurrencies(Map<Currency, BigDecimal> balance) {
+	public Wallet(Map<Currency, BigDecimal> balance) {
 		sliders = FXCollections.observableMap(new HashMap<>());
 
-		DoubleProperty walletUSD = new SimpleDoubleProperty(0.0);
+		double[] walletUSDHolder = { 0.0 };
 		balance.forEach((currency, usd) -> {
-			walletUSD.set(walletUSD.get() + usd.doubleValue());
+			walletUSDHolder[0] += usd.doubleValue();
 		});
-		this.walletUSD = walletUSD.get();
+		this.walletUSD = walletUSDHolder[0];
 
 		balance.forEach((currency, usd) -> {
 			add(currency, usd.doubleValue());
@@ -93,28 +86,6 @@ public class WalletCurrencies {
 	}
 	
 	
-	public void setSlidersPane(Pane slidersPane) {
-		if (paneIsSet) {
-			throw new IllegalStateException("Pane is already set.");
-		}
-		paneIsSet = true;
-		final ObservableList<Node> children = slidersPane.getChildren();
-
-		sliders.forEach((currency, slider) -> {
-			children.add(slider.getNode());
-		});
-		
-		sliders.addListener((Change<? extends Currency,? extends WalletSlider> change) -> {
-			if (change.wasAdded()) {
-				children.add(change.getValueAdded().getNode());
-			}
-			if (change.wasRemoved()) {
-				children.remove(change.getValueRemoved().getNode());
-			}
-			
-		});
-	}
-	
 	public Set<Currency> getCurrencies() {
 		return sliders.keySet();
 	}
@@ -127,16 +98,16 @@ public class WalletCurrencies {
 		return percentChanges;
 	}
 	
-//	TODO: only for testing	
-//	public void setPercentChanges(double... changes) {
-//		int[] changeNoHolder = {0};
-//		onPercentChange.disable();
-//		sliders.forEach((c, s) -> {
-//			s.setPercent(s.getPercent() + changes[changeNoHolder[0]++]);
-//		});
-//		onPercentChange.enable();
-//		
-//	}
+	@SuppressWarnings("unused") // used in tests with reflection
+	private void setPercentChanges(double[] changes) {
+		int[] changeNoHolder = {0};
+		onPercentChange.disable();
+		sliders.forEach((c, s) -> {
+			s.setPercent(s.getPercent() + changes[changeNoHolder[0]]);
+			changeNoHolder[0]++;
+		});
+		onPercentChange.enable();
+	}
 	
 	
 	private final class PercentChangeConsumer implements BiConsumer<Double, WalletSlider> {

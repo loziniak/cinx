@@ -16,6 +16,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.graph.Graph;
+import pl.robotix.cinx.wallet.Wallet;
 
 public class CurrencySelector {
 
@@ -40,7 +41,7 @@ public class CurrencySelector {
 
 	}
 
-	public FlowPane buttons(Api api, WalletCurrencies wallet) {
+	public FlowPane buttons(Api api, Wallet wallet) {
 		FlowPane currencies = new FlowPane();
 		currencies.setVgap(5);
 		currencies.setHgap(5);
@@ -53,7 +54,7 @@ public class CurrencySelector {
 		return currencies;
 	}
 	
-	private ToggleButton currencyButton(final Currency currency, WalletCurrencies wallet) {
+	private ToggleButton currencyButton(final Currency currency, Wallet wallet) {
 		final ToggleButton button = new ToggleButton(currency.symbol);
 		
 		button.selectedProperty().addListener(new ChangeListener<Boolean>() {

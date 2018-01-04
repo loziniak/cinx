@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 import pl.robotix.cinx.Currency;
-import pl.robotix.cinx.WalletCurrencies;
 import pl.robotix.cinx.api.Api;
+import pl.robotix.cinx.wallet.Wallet;
 
 public class Trader {
 	
-	public void generateOperations(Api api, WalletCurrencies wallet) {
+	public void generateOperations(Api api, Wallet wallet) {
 //		List<Operation> operations = new ArrayList<>();
 
 		Map<Currency, Double> changes = wallet.getPercentChanges();
