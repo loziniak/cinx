@@ -16,7 +16,7 @@ public class Wallet {
 			
 	private final double walletUSD;
 	
-	final ObservableMap<Currency, WalletSlider> sliders;
+	final ObservableMap<Currency, WalletEntry> sliders;
 	
 
 	public Wallet(Map<Currency, BigDecimal> balance) {
@@ -34,7 +34,7 @@ public class Wallet {
 	}
 
 	private void add(Currency c, double usd) {
-		WalletSlider slider = new WalletSlider(c, walletUSD, usd);
+		WalletEntry slider = new WalletEntry(c, walletUSD, usd);
 		if (sliders.putIfAbsent(c, slider) == null) {
 			slider.setPercentChangeHandler(onPercentChange);
 		}
@@ -45,16 +45,16 @@ public class Wallet {
 	}
 	
 	public boolean canRemove(Currency c) {
-		WalletSlider slider = sliders.get(c);
+		WalletEntry slider = sliders.get(c);
 		return slider != null && slider.getPercent() == 0.0;
 	}
 	
 	public void remove(Currency c) {
-		WalletSlider removed = sliders.remove(c);
+		WalletEntry removed = sliders.remove(c);
 		changePercentsProportionally(removed, -removed.getPercent(), true);
 	}
 	
-	private void changePercentsProportionally(WalletSlider slider, double percentChange, boolean removed) {
+	private void changePercentsProportionally(WalletEntry slider, double percentChange, boolean removed) {
 		onPercentChange.disable();
 		if (percentChange == -100.0) {
 			double percent = 100.0 / sliders.size() - 1;
@@ -110,12 +110,12 @@ public class Wallet {
 	}
 	
 	
-	private final class PercentChangeConsumer implements BiConsumer<Double, WalletSlider> {
+	private final class PercentChangeConsumer implements BiConsumer<Double, WalletEntry> {
 		
 		private boolean bypass = false;
 
 		@Override
-		public void accept(Double percentChange, WalletSlider slider) {
+		public void accept(Double percentChange, WalletEntry slider) {
 			if (!bypass) {
 				changePercentsProportionally(slider, percentChange, false);
 			}

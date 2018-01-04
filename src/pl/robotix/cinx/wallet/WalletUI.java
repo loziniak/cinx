@@ -10,15 +10,15 @@ public class WalletUI extends HBox {
 		super();
 		
 		wallet.sliders.forEach((currency, slider) -> {
-			getChildren().add(new Sliderx(slider));
+			getChildren().add(new WalletSlider(slider));
 		});
 		
-		wallet.sliders.addListener((Change<? extends Currency,? extends WalletSlider> change) -> {
+		wallet.sliders.addListener((Change<? extends Currency,? extends WalletEntry> change) -> {
 			if (change.wasAdded()) {
-				getChildren().add(new Sliderx(change.getValueAdded()));
+				getChildren().add(new WalletSlider(change.getValueAdded()));
 			}
 			if (change.wasRemoved()) {
-				getChildren().remove(new Sliderx(change.getValueRemoved()));
+				getChildren().remove(new WalletSlider(change.getValueRemoved()));
 			}
 			
 		});

@@ -1,78 +1,77 @@
 package pl.robotix.cinx.wallet;
 
-import java.util.function.BiConsumer;
+import static javafx.geometry.Orientation.VERTICAL;
 
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.When;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
-import pl.robotix.cinx.Currency;
+import javafx.event.EventHandler;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.util.StringConverter;
 
-public class WalletSlider {
-	
-	private final Currency currency;
-	private final double originalPercent;
+public class WalletSlider extends VBox {
 
-	final DoubleProperty percent = new SimpleDoubleProperty();
-	final DoubleBinding percentChange;
-	final BooleanProperty enabled = new SimpleBooleanProperty(true);
+	private static final EventHandler<MouseEvent> DRAG_FILTER = (event) -> {
+		event.consume();
+	};
+	
+	private static final StringConverter<Double> SINGLE_DIGIT = new StringConverter<Double>() {
+		@Override public String toString(Double value) { return String.format("%.1f", value); }
+		@Override public Double fromString(String label) { return new Double(label); }
+	};
+	
+	private Slider slider = new Slider();
 
-	public WalletSlider(Currency c, double walletUSD, double originalPrice) {
-		this.currency = c;
-		this.originalPercent = 100.0 * originalPrice / walletUSD;
-		percent.set(originalPercent);
+	private Label percentChange = new Label(String.format("%+.1f", 0.0));
+	
+	public WalletSlider(WalletEntry s) {
+		super();
+		
+		getChildren().add(new Text(s.getCurrency().symbol));
+		getChildren().add(percentChange);
+		getChildren().add(slider);
+		
+		slider.setOrientation(VERTICAL);
+		slider.setMin(0.0);
+		slider.setMax(100.0);
+		slider.setShowTickLabels(true);
+		slider.setLabelFormatter(SINGLE_DIGIT);
+		slider.setMinHeight(250);
+		slider.valueProperty().bindBidirectional(s.percent);
 
-		percentChange = percent.subtract(originalPercent);
-
-		enabled.bind(new When(percent.isEqualTo(100.0, 0.0))
-				.then(false).otherwise(true));
-	}
-	
-	public void enable() {
-		this.enabled.set(true);
-	}
-	
-	public double getPercent() {
-		return percent.getValue();
-	}
-	
-	public double getOriginalPercent() {
-		return originalPercent;
-	}
-	
-	public void setPercent(double percent) {
-		if (percent > 99.0) percent = 100.0;
-		if (percent < 1.0) percent = 0.0;
-		this.percent.setValue(percent);
-	}
-	
-	public Currency getCurrency() {
-		return currency;
-	}
-	
-	public double getPercentChange() {
-		return percentChange.doubleValue();
-	}
-	
-	public void setPercentChangeHandler(BiConsumer<Double, WalletSlider> onPercentChange) {
-		percent.addListener(
-				(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-			onPercentChange.accept(newValue.doubleValue() - oldValue.doubleValue(), this);
+		percentChange.textProperty().bind(s.percentChange.asString("%+.1f"));
+		percentChange.textFillProperty().bind(
+				new When(s.percentChange.lessThan(0.0))
+				.then(Color.RED)
+				.otherwise(new When(s.percentChange.greaterThan(0.0))
+						.then(Color.BLUE)
+						.otherwise(Color.GREY)));
+		
+		s.enabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+			boolean enabled = newValue;
+			if (enabled) {
+				enable();
+			} else {
+				disable();
+			}
 		});
 	}
-	
-	
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof WalletSlider && ((WalletSlider) obj).currency.equals(this.currency);
+
+	public void disable() {
+		slider.setDisable(true);
+//		slider.setMouseTransparent(true);
+		slider.addEventFilter(MouseEvent.MOUSE_DRAGGED, DRAG_FILTER);
+	}
+
+	public void enable() {
+		slider.setDisable(false);
+//		slider.setMouseTransparent(false);
+		slider.removeEventFilter(MouseEvent.MOUSE_DRAGGED, DRAG_FILTER);
 	}
 	
-	@Override
-	public int hashCode() {
-		return currency.hashCode();
-	}
 
 }
