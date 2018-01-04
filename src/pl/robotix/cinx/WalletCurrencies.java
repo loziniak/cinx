@@ -127,6 +127,17 @@ public class WalletCurrencies {
 		return percentChanges;
 	}
 	
+//	TODO: only for testing	
+//	public void setPercentChanges(double... changes) {
+//		int[] changeNoHolder = {0};
+//		onPercentChange.disable();
+//		sliders.forEach((c, s) -> {
+//			s.setPercent(s.getPercent() + changes[changeNoHolder[0]++]);
+//		});
+//		onPercentChange.enable();
+//		
+//	}
+	
 	
 	private final class PercentChangeConsumer implements BiConsumer<Double, WalletSlider> {
 		

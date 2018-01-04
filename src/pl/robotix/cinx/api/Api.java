@@ -87,6 +87,10 @@ public class Api {
 		
 		return usdBalance;
 	}
+	
+	public void refreshPrices() {
+		prices = retrievePrices();
+	}
 
 
 	private List<Point> initWithOnes(TimeRange range) {
