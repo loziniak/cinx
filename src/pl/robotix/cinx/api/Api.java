@@ -25,7 +25,7 @@ import pl.robotix.cinx.TimeRange;
 
 public class Api {
 	
-	private static final long THROTTLE_MS = 200; // 5 calls per second
+	private static final long THROTTLE_MS = 1000; // 1 call per second
 	
 	private PoloniexExchangeService service;
 	
@@ -70,6 +70,8 @@ public class Api {
 	}
 	
 	public Map<Currency, BigDecimal> retrieveUSDBalance() {
+		throttleControl();
+		
 		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
 		Map<String, PoloniexCompleteBalance> balanceData = service.returnBalance(false);
 		balanceData.entrySet().forEach((entry) -> {
@@ -96,11 +98,15 @@ public class Api {
 	}
 	
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
+		throttleControl();
+		
 		PoloniexOrderResult res = service.buy(pair.toString(), rate, amount, true, false, false);
 		return res.error == null || res.error.isEmpty();
 	}
 
 	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
+		throttleControl();
+		
 		PoloniexOrderResult res = service.sell(pair.toString(), rate, amount, true, false, false);
 		return res.error == null || res.error.isEmpty();
 	}
