@@ -1,9 +1,6 @@
 package pl.robotix.cinx.api;
 
-import static java.math.BigDecimal.valueOf;
 import static java.util.stream.Collectors.toList;
-import static pl.robotix.cinx.Currency.BTC;
-import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,6 +14,7 @@ import java.util.NoSuchElementException;
 
 import com.cf.client.poloniex.PoloniexExchangeService;
 import com.cf.data.model.poloniex.PoloniexCompleteBalance;
+import com.cf.data.model.poloniex.PoloniexOrderResult;
 import com.cf.data.model.poloniex.PoloniexTicker;
 
 import pl.robotix.cinx.Currency;
@@ -48,12 +46,6 @@ public class Api {
 		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
 		pairs.forEach((intermediatePair) -> {
 			List<Point> intermediateHistory = retrievePriceHistory(intermediatePair, range);
-
-//			if (Math.abs((double) intermediateHistory.size() / usdPriceHistory.size() - 1.0) > 0.01) {
-//				throw new IllegalStateException("Price history sizes differ too much. "
-//						+ intermediatePair + ":" + intermediateHistory.size() + ", "
-//						+ new Pair(USDT, currency) + ": " + usdPriceHistory.size());
-//			}
 
 			Iterator<Point> intermediateIterator = intermediateHistory.iterator();
 			Point intermediatePoint = null;
@@ -90,17 +82,27 @@ public class Api {
 		return usdBalance;
 	}
 	
-	public Map<Currency, BigDecimal> retrieveUSDBalanceMock() {
-		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
-		usdBalance.put(USDT, valueOf(1000.0));
-		usdBalance.put(BTC, valueOf(2500.0));
-		usdBalance.put(new Currency("MAID"), valueOf(700.0));
-		
-		return usdBalance;
-	}
+//	public Map<Currency, BigDecimal> retrieveUSDBalanceMock() {
+//		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
+//		usdBalance.put(USDT, valueOf(1000.0));
+//		usdBalance.put(BTC, valueOf(2500.0));
+//		usdBalance.put(new Currency("MAID"), valueOf(700.0));
+//		
+//		return usdBalance;
+//	}
 	
 	public void refreshPrices() {
 		prices = retrievePrices();
+	}
+	
+	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
+		PoloniexOrderResult res = service.buy(pair.toString(), rate, amount, true, false, false);
+		return res.error == null || res.error.isEmpty();
+	}
+
+	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
+		PoloniexOrderResult res = service.sell(pair.toString(), rate, amount, true, false, false);
+		return res.error == null || res.error.isEmpty();
 	}
 
 

@@ -1,7 +1,7 @@
 package pl.robotix.cinx;
 
 import static pl.robotix.cinx.Currency.USDT;
-import static pl.robotix.cinx.TimeRange.DAY;
+import static pl.robotix.cinx.TimeRange.WEEK;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +30,7 @@ public class CurrencySelector {
 			if (change.wasAdded()) {
 				Currency added = change.getElementAdded();
 				if (!added.equals(USDT)) {
-					List<Point> priceHistory = api.retrieveUSDPriceHistory(added, DAY);
+					List<Point> priceHistory = api.retrieveUSDPriceHistory(added, WEEK);
 					graph.display(priceHistory, added);
 				}
 			}

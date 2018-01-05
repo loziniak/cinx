@@ -28,6 +28,10 @@ public class Trader {
 	private static final String LOG_PERCENT_FORMAT = "%+.2f%%";
 	private static final String LOG_USD_FORMAT = "%.2f USD";
 	
+	private static final BigDecimal BUY_RATE_MOD = BigDecimal.valueOf(11, 1); // 1.1
+	private static final BigDecimal SELL_RATE_MOD = BigDecimal.valueOf(9, 1); // 0.9
+	private static final BigDecimal TRANSITION_RATE_MOD = BigDecimal.valueOf(99, 2); // 0.99
+	
 	private static final double TAKER_FEE = 0.0025;
 	
 	private final Api api;
@@ -120,9 +124,27 @@ public class Trader {
 	public void executeOperations() {
 		operations.forEach((operation) -> {
 			
-			// TODO
+			switch (operation.type) {
+			case BUY:
+				boolean buySuccess = api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount);
+				if (buySuccess) {
+					log.info("finished buy: "+operation.pair);
+				} else {
+					log.info("ERROR buying "+operation.pair);
+				}
+				break;
+			case SELL:
+				boolean sellSuccess = api.sell(operation.pair, operation.rate.multiply(SELL_RATE_MOD), operation.amount);
+				if (sellSuccess) {
+					log.info("finished sell: "+operation.pair);
+				} else {
+					log.info("ERROR selling "+operation.pair);
+				}
+				break;
+			}
 			
 		});
+		log.info("=================================");
 	}
 	
 	private List<Operation> operationsFor(Currency from, Currency to, BigDecimal usdChange) {
@@ -141,7 +163,7 @@ public class Trader {
 			} else {
 				ops = new Operation[] {
 						buy(          USDT_BTC, usdChange),
-						buy( new Pair(BTC, to), usdChange)};
+						buy( new Pair(BTC, to), usdChange.multiply(TRANSITION_RATE_MOD))};
 			}
 		} else if (from.equals(BTC)) {
 			if (to.equals(USDT)) {
@@ -158,11 +180,11 @@ public class Trader {
 			} else if (to.equals(USDT)) {
 				ops = new Operation[] {
 						sell(new Pair(BTC, from), usdChange),
-						sell(         USDT_BTC, usdChange)};
+						sell(         USDT_BTC, usdChange.multiply(TRANSITION_RATE_MOD))};
 			} else {
 				ops = new Operation[] {
 						sell(new Pair(BTC, from), usdChange),
-						buy( new Pair(BTC, to), usdChange)};
+						buy( new Pair(BTC, to), usdChange.multiply(TRANSITION_RATE_MOD))};
 			}
 		}
 		

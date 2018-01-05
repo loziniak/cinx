@@ -8,8 +8,6 @@ import java.time.Instant;
 import java.util.Map;
 
 import javafx.application.Application;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -49,9 +47,10 @@ public class App extends Application {
 		
 		String poloniexApiKey = System.getenv(POLONIEX_APIKEY_ENV);
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
+
 		api = new Api(poloniexApiKey, poloniexSecret);
-		
 		wallet = new Wallet(balanceWithBTCAndUSDT());
+		trader = new Trader(api, wallet, log);
 
 		layout(primaryStage);
 
@@ -61,7 +60,6 @@ public class App extends Application {
 		Config config = new Config(CONFIG_FILE);
 		currencies.addAll(config.getSubscribedCurrencies());
 		
-		trader = new Trader(api, wallet, log);
 	}
 	
 	private void layout(Stage stage) {
@@ -110,7 +108,8 @@ public class App extends Application {
 	
 	
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
-		Map<Currency, BigDecimal> balance = api.retrieveUSDBalanceMock();
+//		Map<Currency, BigDecimal> balance = api.retrieveUSDBalanceMock();
+		Map<Currency, BigDecimal> balance = api.retrieveUSDBalance();
 		if (!balance.containsKey(USDT)) {
 			balance.put(USDT, BigDecimal.valueOf(0.0));
 		}

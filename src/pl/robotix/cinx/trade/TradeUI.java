@@ -3,6 +3,7 @@ package pl.robotix.cinx.trade;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.StackPane;
@@ -14,19 +15,24 @@ import pl.robotix.cinx.Logger;
 
 public class TradeUI extends StackPane {
 	
-	VBox logArea = new VBox();
+	private VBox logArea = new VBox();
+	private ScrollPane scroll = new ScrollPane(logArea);
+	
+	private final Trader trader;
 	
 	public TradeUI(Logger logger, Trader trader) {
+		this.trader = trader;
 
-		logArea.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
 		logArea.setPadding(new Insets(20));
-		getChildren().add(logArea);
+		
+		scroll.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+		getChildren().add(scroll);
 		
 		Button execute = new Button("Execute");
 		StackPane.setAlignment(execute, Pos.BOTTOM_RIGHT);
-		StackPane.setMargin(execute, new Insets(10));
+		StackPane.setMargin(execute, new Insets(40));
 		execute.setOnAction((event) -> {
-			trader.executeOperations();
+			this.trader.executeOperations();
 		});
 		getChildren().add(execute);
 		
@@ -42,6 +48,7 @@ public class TradeUI extends StackPane {
 		if (stroke != null) text.setStroke(stroke);
 		text.setOpacity(0.5);
 		logArea.getChildren().add(text);
+		scroll.setVvalue(scroll.getVmin());
 	}
 
 }
