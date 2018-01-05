@@ -10,6 +10,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import pl.robotix.cinx.Currency;
+import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
 
@@ -17,6 +18,8 @@ public class TraderTest {
 
 	@Test
 	public void findsPriceChain() throws InterruptedException {
+		
+		Logger log = new Logger((message) -> System.out.println(message));
 		
 		Map<Currency, BigDecimal> balance = new HashMap<>();
 		balance.put(new Currency("A"), valueOf(100.0));
@@ -38,7 +41,7 @@ public class TraderTest {
 		
 		System.out.println(wallet.getPercentChanges());
 		
-		new Trader(null, wallet).generateOperations();
+		new Trader(null, wallet, log).generateOperations();
 //		expected output:
 //		A<-->B: -6,00000000
 //		A<-->D: -1,00000000

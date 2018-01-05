@@ -24,7 +24,6 @@ public abstract class MyAxis<T> extends Axis<T> {
 		lower = low;
 		upper = up;
 		invalidateRange();
-//		layoutChildren(); // TODO: ??
 	}
 	
 	
@@ -68,6 +67,7 @@ public abstract class MyAxis<T> extends Axis<T> {
 		return getRange();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void setRange(Object range, boolean animate) {
 		lower = ((List<T>) range).get(0);
@@ -81,7 +81,9 @@ public abstract class MyAxis<T> extends Axis<T> {
 
 	@Override
 	protected List<T> calculateTickValues(double length, Object range) {
+		@SuppressWarnings("unchecked")
 		double low = toNumericValue(((List<T>) range).get(0));
+		@SuppressWarnings("unchecked")
 		double up = toNumericValue(((List<T>) range).get(1));
 
 		List<T> tickValues = new ArrayList<>();

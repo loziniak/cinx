@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import pl.robotix.cinx.Currency;
+import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.wallet.Wallet;
@@ -31,12 +32,14 @@ public class Trader {
 	
 	private final Api api;
 	private final Wallet wallet;
+	private final Logger log;
 	
 	private List<Operation> operations = new ArrayList<>();
 	
-	public Trader(Api api, Wallet wallet) {
+	public Trader(Api api, Wallet wallet, Logger log) {
 		this.api = api;
 		this.wallet = wallet;
+		this.log = log;
 	}
 	
 	public List<Operation> generateOperations() {
@@ -82,7 +85,7 @@ public class Trader {
 					biggest.remove(second);
 					changes.remove(second);
 					
-					System.out.println("" + processed + " --> " + second
+					log.info("" + processed + " --> " + second
 							+ ": " + String.format(LOG_PERCENT_FORMAT, secondChange));
 					
 					operations.addAll(operationsFor(processed, second, percentToUsd(secondChange)));
@@ -92,7 +95,7 @@ public class Trader {
 					addToChange(changes, second, processedChange);
 					secondChange += processedChange;
 					
-					System.out.println("" + processed + " --> " + second
+					log.info("" + processed + " --> " + second
 							+ ": " + String.format(LOG_PERCENT_FORMAT, - processedChange));
 					
 					operations.addAll(operationsFor(processed, second, percentToUsd(- processedChange)));
@@ -106,15 +109,20 @@ public class Trader {
 		operations.forEach((op) -> {
 			usdOverallChangeHolder[0] += op.amount.doubleValue() * api.getPrices().getUSDFor(op.pair.base).doubleValue();
 		});
-		System.out.println("Overall change: " + String.format(LOG_USD_FORMAT, usdOverallChangeHolder[0]));
-		System.out.println("Overall fee: " + String.format(LOG_USD_FORMAT, 
+		log.info("Overall change: " + String.format(LOG_USD_FORMAT, usdOverallChangeHolder[0]));
+		log.info("Overall fee: " + String.format(LOG_USD_FORMAT, 
 				usdOverallChangeHolder[0] * TAKER_FEE));
+		log.info("=================================");
 		
 		return operations;
 	}
 	
-	private BigDecimal percentToUsd(double percent) {
-		return new BigDecimal(percent * wallet.getWalletUSD() / 100.0);
+	public void executeOperations() {
+		operations.forEach((operation) -> {
+			
+			// TODO
+			
+		});
 	}
 	
 	private List<Operation> operationsFor(Currency from, Currency to, BigDecimal usdChange) {
@@ -181,11 +189,6 @@ public class Trader {
 		return op;
 	}
 	
-	private void describe(Operation op, BigDecimal usd) {
-		System.out.print(op);
-		System.out.println(" (" + String.format(LOG_USD_FORMAT, usd) + ")");
-	}
-	
 	private List<Currency> biggest(final Map<Currency, Double> changes) {
 		List<Currency> all = new LinkedList<>(changes.keySet());
 		all.sort(reverseOrder((Currency c1, Currency c2) -> Double.compare(
@@ -216,6 +219,16 @@ public class Trader {
 			if (change > 0.0) placeForPositive.add(currency);
 			else if (change < 0.0) placeForNegative.add(currency);
 		});
+	}
+	
+	private void describe(Operation op, BigDecimal usd) {
+		String message = op.toString() + " (" + String.format(LOG_USD_FORMAT, usd) + ")";
+		if (op.type == BUY) log.buy(message);
+		if (op.type == SELL) log.sell(message);
+	}
+	
+	private BigDecimal percentToUsd(double percent) {
+		return new BigDecimal(percent * wallet.getWalletUSD() / 100.0);
 	}
 	
 	

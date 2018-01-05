@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.Map;
 
 import javafx.application.Application;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -15,10 +17,10 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.graph.Graph;
+import pl.robotix.cinx.trade.TradeUI;
 import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
 import pl.robotix.cinx.wallet.WalletUI;
@@ -36,8 +38,11 @@ public class App extends Application {
 	private Api api;
 	private Graph graph = new Graph();
 	private Wallet wallet;
-	private CurrencySelector currencies = new CurrencySelector();
+	private Trader trader;
 	
+	private CurrencySelector currencies = new CurrencySelector();
+	private Logger log = new Logger();
+
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		primaryStage.setTitle("Cinx");
@@ -55,12 +60,15 @@ public class App extends Application {
 		currencies.addAll(wallet.getCurrencies());
 		Config config = new Config(CONFIG_FILE);
 		currencies.addAll(config.getSubscribedCurrencies());
+		
+		trader = new Trader(api, wallet, log);
 	}
 	
 	private void layout(Stage stage) {
 		Tab trade = new Tab("Trade");
+		TradeUI tradePane = new TradeUI(log, trader);
 		trade.setClosable(false);
-		trade.setContent(new Text("TRADE"));
+		trade.setContent(tradePane);
 		
 		Tab analyze = new Tab("Analzye");
 		analyze.setClosable(false);
@@ -88,7 +96,7 @@ public class App extends Application {
 		generateOperations.setOnAction((event) -> {
 			trade.getTabPane().getSelectionModel().select(trade);
 			api.refreshPrices();
-			new Trader(api, wallet).generateOperations();
+			trader.generateOperations();
 		});
 		topRight.getChildren().add(generateOperations);
 		top.getChildren().add(topRight);
