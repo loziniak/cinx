@@ -5,6 +5,7 @@ import static javafx.geometry.Orientation.VERTICAL;
 import javafx.beans.binding.When;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
@@ -31,6 +32,8 @@ public class WalletSlider extends VBox {
 
 	private final Label percentChange = new Label(String.format("%+.1f", 0.0));
 	
+	private final CheckBox freeze = new CheckBox();
+	
 	public WalletSlider(WalletEntry s) {
 		super();
 		currency = s.getCurrency();
@@ -38,6 +41,7 @@ public class WalletSlider extends VBox {
 		getChildren().add(new Text(s.getCurrency().symbol));
 		getChildren().add(percentChange);
 		getChildren().add(slider);
+		getChildren().add(freeze);
 		
 		slider.setOrientation(VERTICAL);
 		slider.setMin(0.0);
@@ -54,6 +58,8 @@ public class WalletSlider extends VBox {
 				.otherwise(new When(s.percentChange.greaterThan(0.0))
 						.then(Color.BLUE)
 						.otherwise(Color.GREY)));
+		
+		s.freeze.bind(freeze.selectedProperty());
 		
 		s.enabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
 			boolean enabled = newValue;

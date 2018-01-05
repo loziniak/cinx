@@ -75,7 +75,7 @@ public class Wallet {
 		double x = (100.0 - previousPercent - percentChange) / (100.0 - previousPercent);
 		
 		sliders.forEach((currency, otherSlider) -> {
-			if (!currency.equals(slider.getCurrency())) {
+			if (!currency.equals(slider.getCurrency()) && !otherSlider.freeze.get()) {
 				otherSlider.setPercent(otherSlider.getPercent() * x);
 				if (otherSlider.getPercent() != 100.0) {
 					otherSlider.enable();

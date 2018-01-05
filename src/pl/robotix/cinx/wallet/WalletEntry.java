@@ -18,6 +18,7 @@ public class WalletEntry {
 	final DoubleProperty percent = new SimpleDoubleProperty();
 	final DoubleBinding percentChange;
 	final BooleanProperty enabled = new SimpleBooleanProperty(true);
+	final BooleanProperty freeze = new SimpleBooleanProperty(false);
 
 	public WalletEntry(Currency c, double walletUSD, double originalPrice) {
 		this.currency = c;
