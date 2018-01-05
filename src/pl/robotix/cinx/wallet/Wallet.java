@@ -2,6 +2,7 @@ package pl.robotix.cinx.wallet;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -51,40 +52,52 @@ public class Wallet {
 	
 	public void remove(Currency c) {
 		WalletEntry removed = sliders.remove(c);
-		changePercentsProportionally(removed, -removed.getPercent(), true);
+		changePercentsProportionally(removed, 0.0, removed.getPercent(), true);
 	}
 	
-	private void changePercentsProportionally(WalletEntry slider, double percentChange, boolean removed) {
+	private void changePercentsProportionally(WalletEntry movingSlider,
+			double newPercent, double oldPercent, boolean removed) {
 		onPercentChange.disable();
-		if (percentChange == -100.0) {
-			double percent = 100.0 / sliders.size() - 1;
-			sliders.forEach((currency, otherSlider) -> {
-				if (!currency.equals(slider.getCurrency())) {
-					otherSlider.setPercent(percent);
-				}
-			});
-			return;
-		}
-		
-		double previousPercent;
-		if (removed) {
-			previousPercent = -percentChange;
-		} else {
-			previousPercent = slider.getPercent() - percentChange;
-		}
-		double x = (100.0 - previousPercent - percentChange) / (100.0 - previousPercent);
-		
-		sliders.forEach((currency, otherSlider) -> {
-			if (!currency.equals(slider.getCurrency()) && !otherSlider.freeze.get()) {
-				otherSlider.setPercent(otherSlider.getPercent() * x);
-				if (otherSlider.getPercent() != 100.0) {
-					otherSlider.enable();
+
+		Set<WalletEntry> slidersToMove = new HashSet<>();
+		double[] movedPercentHolder = {0.0};
+		double[] freezedPercentHolder = {0.0};
+		sliders.forEach((currency, slider) -> {
+			if (slider.freeze.get()) {
+				freezedPercentHolder[0] += slider.getPercent();
+			} else {
+				if (!slider.equals(movingSlider)) {
+					slidersToMove.add(slider);
+					movedPercentHolder[0] += slider.getPercent();
 				}
 			}
 		});
+
+		
+		if (slidersToMove.size() == 0) {
+			movingSlider.setPercent(oldPercent);
+
+		} else {
+			if (oldPercent == 100.0) {
+				double percent = 100.0 / slidersToMove.size();
+				slidersToMove.forEach((otherSlider) -> {
+					otherSlider.setPercent(percent);
+				});
+
+			} else {
+				double x = (100.0 - newPercent - freezedPercentHolder[0]) / movedPercentHolder[0];
+				slidersToMove.forEach((otherSlider) -> {
+					otherSlider.setPercent(otherSlider.getPercent() * x);
+					if (otherSlider.getPercent() != 100.0) {
+						otherSlider.enable();
+					}
+				});
+				
+			}
+		}
+
 		onPercentChange.enable();
 	}
-	
 	
 	public Set<Currency> getCurrencies() {
 		return sliders.keySet();
@@ -113,14 +126,14 @@ public class Wallet {
 		return walletUSD;
 	}
 	
-	private final class PercentChangeConsumer implements BiConsumer<Double, WalletEntry> {
+	private final class PercentChangeConsumer implements BiConsumer<double[], WalletEntry> {
 		
 		private boolean bypass = false;
 
 		@Override
-		public void accept(Double percentChange, WalletEntry slider) {
+		public void accept(double[] values, WalletEntry slider) {
 			if (!bypass) {
-				changePercentsProportionally(slider, percentChange, false);
+				changePercentsProportionally(slider, values[0], values[1], false);
 			}
 		}
 		

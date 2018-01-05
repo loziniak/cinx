@@ -69,6 +69,8 @@ public class WalletSlider extends VBox {
 				disable();
 			}
 		});
+		
+		s.bindIsChanging(slider.valueChangingProperty());
 	}
 
 	public void disable() {

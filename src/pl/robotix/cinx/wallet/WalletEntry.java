@@ -7,6 +7,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import pl.robotix.cinx.Currency;
 
@@ -19,6 +20,7 @@ public class WalletEntry {
 	final DoubleBinding percentChange;
 	final BooleanProperty enabled = new SimpleBooleanProperty(true);
 	final BooleanProperty freeze = new SimpleBooleanProperty(false);
+	final BooleanProperty isChanging = new SimpleBooleanProperty(false);
 
 	public WalletEntry(Currency c, double walletUSD, double originalPrice) {
 		this.currency = c;
@@ -62,11 +64,25 @@ public class WalletEntry {
 		return percentChange.doubleValue();
 	}
 	
-	public void setPercentChangeHandler(BiConsumer<Double, WalletEntry> onPercentChange) {
-		percent.addListener(
-				(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-			onPercentChange.accept(newValue.doubleValue() - oldValue.doubleValue(), this);
+	public void setPercentChangeHandler(BiConsumer<double[], WalletEntry> onPercentChange) {
+		final WalletEntry self = this;
+		isChanging.addListener(new ChangeListener<Boolean>() {
+			
+			private Double oldPercent;
+			
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				if (newValue) {
+					this.oldPercent = self.percent.get();
+				} else {
+					onPercentChange.accept( new double[] { self.percent.get(), oldPercent }, self);
+				}
+			}
 		});
+	}
+	
+	public void bindIsChanging(BooleanProperty isChanging) {
+		this.isChanging.bind(isChanging);
 	}
 	
 	

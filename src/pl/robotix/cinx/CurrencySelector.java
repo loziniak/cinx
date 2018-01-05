@@ -1,7 +1,9 @@
 package pl.robotix.cinx;
 
 import static pl.robotix.cinx.Currency.USDT;
+import static pl.robotix.cinx.TimeRange.MONTH;
 import static pl.robotix.cinx.TimeRange.WEEK;
+import static pl.robotix.cinx.TimeRange.DAY;
 
 import java.util.ArrayList;
 import java.util.Collection;
