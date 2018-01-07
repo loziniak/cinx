@@ -124,7 +124,7 @@ public class Api {
 		return usdPriceHistory;
 	}
 	
-    private List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
+    protected List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
         throttleControl();
         
         return service.returnChartData(pair.toString(), range.densitySeconds, range.getStart())

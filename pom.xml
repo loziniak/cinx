@@ -23,7 +23,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
-            <scope>test</scope>
+            <!-- <scope>test</scope> -->
             <type>jar</type>
         </dependency>
     </dependencies>
@@ -46,7 +46,7 @@
                 <version>8.8.3</version>
                 <configuration>
                     <vendor>${project.organization.name}</vendor>
-                    <mainClass>main.java.pl.robotix.cinx.App</mainClass>
+                    <mainClass>pl.robotix.cinx.App</mainClass>
                 </configuration>
             </plugin>
         </plugins>

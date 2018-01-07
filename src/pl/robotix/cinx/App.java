@@ -17,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
+import pl.robotix.cinx.api.CachedApi;
 import pl.robotix.cinx.graph.Graph;
 import pl.robotix.cinx.trade.TradeUI;
 import pl.robotix.cinx.trade.Trader;
@@ -48,7 +49,7 @@ public class App extends Application {
 		String poloniexApiKey = System.getenv(POLONIEX_APIKEY_ENV);
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
 
-		api = new Api(poloniexApiKey, poloniexSecret);
+		api = new CachedApi(poloniexApiKey, poloniexSecret);
 		wallet = new Wallet(balanceWithBTCAndUSDT());
 		trader = new Trader(api, wallet, log);
 
