@@ -36,10 +36,10 @@ public class TradeUI extends StackPane {
 		});
 		getChildren().add(execute);
 		
-		logger.addBuyListener((message) -> log(message, Color.RED, null, 0.5));
+		logger.addBuyListener((message) -> log(message, Color.BLUE, null, 0.5));
 		logger.addInfoListener((message) -> log(message, null, null, 0.5));
 		logger.addErrorListener((message) -> log(message, Color.RED, Color.RED, 1.0));
-		logger.addSellListener((message) -> log(message, Color.BLUE, null, 0.5));
+		logger.addSellListener((message) -> log(message, Color.RED, null, 0.5));
 	}
 	
 	private void log(String message, Paint fill, Paint stroke, double opacity) {

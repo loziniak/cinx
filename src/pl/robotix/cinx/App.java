@@ -5,7 +5,11 @@ import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -60,7 +64,25 @@ public class App extends Application {
 		currencies.addAll(wallet.getCurrencies());
 		Config config = new Config(CONFIG_FILE);
 		currencies.addAll(config.getSubscribedCurrencies());
+
+		currencies.addAll(random(2));
+	}
+	
+	private Set<Currency> random(int count) {
+		double fromFirst = 0.75;
 		
+		Set<Currency> currencySet = api.getPrices().getAllCurrencies();
+		currencySet.removeAll(currencies.selected());
+		List<Currency> currencyList = new ArrayList<>(currencySet);
+		currencyList.sort(api.getPrices().byVolume());
+		
+		Set<Currency> random = new HashSet<>();
+		do {
+			random.add(currencyList.get(
+					new Double(Math.random() * currencyList.size() * fromFirst).intValue()));
+		} while (random.size() < count);
+			
+		return random;
 	}
 	
 	private void layout(Stage stage) {

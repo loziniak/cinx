@@ -7,7 +7,9 @@ import static pl.robotix.cinx.TimeRange.DAY;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -106,6 +108,10 @@ public class CurrencySelector {
 
 	public void addAll(Collection<Currency> c) {
 		chartCurrencies.addAll(c);
+	}
+
+	public Set<Currency> selected() {
+		return Collections.unmodifiableSet(chartCurrencies);
 	}
 
 }
