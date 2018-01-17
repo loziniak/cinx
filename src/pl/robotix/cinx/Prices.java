@@ -58,29 +58,48 @@ public class Prices {
 	}
 
 	public List<Pair> pairsToComputeUSDFor(final Currency currency) {
-		if (currency.equals(USDT)) {
+//		if (currency.equals(USDT)) {
+//			return Collections.emptyList();
+//		}
+//		
+//		Pair currToUsd = new Pair(USDT, currency);
+//		BigDecimal foundPrice = prices.get(currToUsd);
+//		if (foundPrice != null) {
+//			return Arrays.asList(new Pair[]{ currToUsd });
+//		}
+//		
+//		final LinkedList<Pair> pairsHolder = new LinkedList<>();
+//		prices.forEach((pair, price) -> {
+//			if (pairsHolder.isEmpty() && pair.base.equals(currency)) {
+//				Currency secondCurrency = pair.quote;
+//				List<Pair> leftPairs = pairsToComputeUSDFor(secondCurrency);
+//				if (leftPairs != null) {
+//					pairsHolder.add(new Pair(secondCurrency, currency));
+//					pairsHolder.addAll(leftPairs);
+//				}
+//			}
+//		});
+//		
+//		return pairsHolder;
+		return pairsToComputePrice(USDT, currency);
+	}
+	
+	public List<Pair> pairsToComputeBTCFor(final Currency currency) {
+		return pairsToComputePrice(BTC, currency);
+	}
+	
+	private List<Pair> pairsToComputePrice(final Currency quote, final Currency base) {
+		if (base.equals(quote)) {
 			return Collections.emptyList();
 		}
 		
-		Pair currToUsd = new Pair(USDT, currency);
-		BigDecimal foundPrice = prices.get(currToUsd);
+		Pair currToX = new Pair(quote, base);
+		BigDecimal foundPrice = prices.get(currToX);
 		if (foundPrice != null) {
-			return Arrays.asList(new Pair[]{ currToUsd });
+			return Arrays.asList(currToX);
 		}
 		
-		final LinkedList<Pair> pairsHolder = new LinkedList<>();
-		prices.forEach((pair, price) -> {
-			if (pairsHolder.isEmpty() && pair.base.equals(currency)) {
-				Currency secondCurrency = pair.quote;
-				List<Pair> leftPairs = pairsToComputeUSDFor(secondCurrency);
-				if (leftPairs != null) {
-					pairsHolder.add(new Pair(secondCurrency, currency));
-					pairsHolder.addAll(leftPairs);
-				}
-			}
-		});
-		
-		return pairsHolder;
+		return Arrays.asList(new Pair(quote, BTC), new Pair(BTC, base));
 	}
 	
 	public Set<Currency> getAllCurrencies() {

@@ -40,6 +40,7 @@ public class Config {
 	
 	public List<Currency> getSubscribedCurrencies() {
 		return Arrays.asList(data.getProperty(SUBSCRIBED_CURRENCIES_KEY).split(",")).stream()
+				.filter((symbol) -> !symbol.isEmpty())
 				.map((symbol) -> new Currency(symbol)).collect(toList());
 	}
 

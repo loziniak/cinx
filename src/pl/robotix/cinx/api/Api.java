@@ -11,8 +11,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 
 import com.cf.client.poloniex.PoloniexExchangeService;
+import com.cf.data.model.poloniex.PoloniexChartData;
 import com.cf.data.model.poloniex.PoloniexCompleteBalance;
 import com.cf.data.model.poloniex.PoloniexOrderResult;
 import com.cf.data.model.poloniex.PoloniexTicker;
@@ -43,7 +45,8 @@ public class Api {
 	public List<Point> retrieveUSDPriceHistory(Currency currency, TimeRange range) {
 		List<Point> usdPriceHistory = initWithOnes(range);
 		
-		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
+//		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
+		List<Pair> pairs = prices.pairsToComputeBTCFor(currency);
 		pairs.forEach((intermediatePair) -> {
 			List<Point> intermediateHistory = retrievePriceHistory(intermediatePair, range);
 
@@ -127,11 +130,18 @@ public class Api {
     protected List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
         throttleControl();
         
+        Function<PoloniexChartData, Point> pointCreator;
+        if (pair.isReverse()) {
+        	pointCreator = (point) -> new Point(point.date.toLocalDateTime() , 1.0 / point.weightedAverage.doubleValue());
+        	pair = pair.reverse();
+        } else {
+        	pointCreator = (point) -> new Point(point.date.toLocalDateTime() , point.weightedAverage.doubleValue());
+        }
+        
         return service.returnChartData(pair.toString(), range.densitySeconds, range.getStart())
         .stream()
-        .map((point) -> {
-            return new Point(point.date.toLocalDateTime() , point.weightedAverage.doubleValue());
-        }).collect(toList());
+        .map(pointCreator)
+        .collect(toList());
     }
     
 	private Prices retrievePrices() {

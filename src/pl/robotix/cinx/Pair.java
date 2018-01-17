@@ -34,6 +34,11 @@ public class Pair {
 	public Pair reverse() {
 		return new Pair(base, quote);
 	}
+	
+	public boolean isReverse() {
+		return base.equals(USDT)
+				|| base.equals(BTC) && !quote.equals(USDT);
+	}
 
 	@Override
 	public String toString() {
