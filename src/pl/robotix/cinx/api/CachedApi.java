@@ -17,8 +17,10 @@ public class CachedApi extends Api {
 	}
 	
 	@Override
-	protected List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
+	public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
 		String key = "retrievePriceHistory_" + pair + "_" + range;
+
+		@SuppressWarnings("unchecked")
 		List<Point> value = (List<Point>) cache.get(key);
 		if (value == null) {
 			value = super.retrievePriceHistory(pair, range);

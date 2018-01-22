@@ -20,6 +20,7 @@ import java.util.Map;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.Pair;
+import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.wallet.Wallet;
 
@@ -34,14 +35,14 @@ public class Trader {
 	
 	private static final double TAKER_FEE = 0.0025;
 	
-	private final Api api;
+	private Prices prices;
 	private final Wallet wallet;
 	private final Logger log;
 	
 	private List<Operation> operations = new ArrayList<>();
 	
-	public Trader(Api api, Wallet wallet, Logger log) {
-		this.api = api;
+	public Trader(Prices prices, Wallet wallet, Logger log) {
+		this.prices = prices;
 		this.wallet = wallet;
 		this.log = log;
 	}
@@ -111,7 +112,7 @@ public class Trader {
 		
 		double[] usdOverallChangeHolder = {0.0};
 		operations.forEach((op) -> {
-			usdOverallChangeHolder[0] += op.amount.doubleValue() * api.getPrices().getUSDFor(op.pair.base).doubleValue();
+			usdOverallChangeHolder[0] += op.amount.doubleValue() * prices.getUSDFor(op.pair.base).doubleValue();
 		});
 		log.info("Overall change: " + String.format(LOG_USD_FORMAT, usdOverallChangeHolder[0]));
 		log.info("Overall fee: " + String.format(LOG_USD_FORMAT, 
@@ -121,7 +122,7 @@ public class Trader {
 		return operations;
 	}
 	
-	public void executeOperations() {
+	public void executeOperations(Api api) {
 		operations.forEach((operation) -> {
 			
 			switch (operation.type) {
@@ -194,8 +195,8 @@ public class Trader {
 	private Operation buy(Pair pair, BigDecimal usd) {
 		Operation op = new Operation(BUY);
 		op.pair = pair;
-		op.amount = usd.divide(api.getPrices().getRate(new Pair(USDT, pair.base)), MathContext.DECIMAL64);
-		op.rate = api.getPrices().getRate(pair);
+		op.amount = usd.divide(prices.getRate(new Pair(USDT, pair.base)), MathContext.DECIMAL64);
+		op.rate = prices.getRate(pair);
 		describe(op, usd);
 
 		return op;
@@ -204,8 +205,8 @@ public class Trader {
 	private Operation sell(Pair pair, BigDecimal usd) {
 		Operation op = new Operation(SELL);
 		op.pair = pair;
-		op.amount = usd.divide(api.getPrices().getRate(new Pair(USDT, pair.base)), MathContext.DECIMAL64);
-		op.rate = api.getPrices().getRate(pair);
+		op.amount = usd.divide(prices.getRate(new Pair(USDT, pair.base)), MathContext.DECIMAL64);
+		op.rate = prices.getRate(pair);
 		describe(op, usd);
 
 		return op;
@@ -253,8 +254,8 @@ public class Trader {
 		return new BigDecimal(percent * wallet.getWalletUSD() / 100.0);
 	}
 	
+	public void setPrices(Prices prices) {
+		this.prices = prices;
+	}
 	
-	
-	// execute operations with api
-
 }

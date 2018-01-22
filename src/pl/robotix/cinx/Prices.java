@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -58,29 +57,6 @@ public class Prices {
 	}
 
 	public List<Pair> pairsToComputeUSDFor(final Currency currency) {
-//		if (currency.equals(USDT)) {
-//			return Collections.emptyList();
-//		}
-//		
-//		Pair currToUsd = new Pair(USDT, currency);
-//		BigDecimal foundPrice = prices.get(currToUsd);
-//		if (foundPrice != null) {
-//			return Arrays.asList(new Pair[]{ currToUsd });
-//		}
-//		
-//		final LinkedList<Pair> pairsHolder = new LinkedList<>();
-//		prices.forEach((pair, price) -> {
-//			if (pairsHolder.isEmpty() && pair.base.equals(currency)) {
-//				Currency secondCurrency = pair.quote;
-//				List<Pair> leftPairs = pairsToComputeUSDFor(secondCurrency);
-//				if (leftPairs != null) {
-//					pairsHolder.add(new Pair(secondCurrency, currency));
-//					pairsHolder.addAll(leftPairs);
-//				}
-//			}
-//		});
-//		
-//		return pairsHolder;
 		return pairsToComputePrice(USDT, currency);
 	}
 	

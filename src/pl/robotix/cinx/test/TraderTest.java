@@ -9,8 +9,11 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import javafx.collections.FXCollections;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
+import pl.robotix.cinx.Pair;
+import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
 
@@ -27,7 +30,7 @@ public class TraderTest {
 		balance.put(new Currency("C"), valueOf(100.0));
 		balance.put(new Currency("D"), valueOf(100.0));
 		balance.put(new Currency("E"), valueOf(100.0));
-		Wallet wallet = new Wallet(balance);
+		Wallet wallet = new Wallet(balance, FXCollections.observableSet());
 		
 		System.out.println(wallet.getPercentChanges());
 		
@@ -41,11 +44,40 @@ public class TraderTest {
 		
 		System.out.println(wallet.getPercentChanges());
 		
-		new Trader(null, wallet, log).generateOperations();
+		Map<Pair, BigDecimal> prices = new HashMap<>();
+		prices.put(new Pair("USDT_A"), valueOf(1.0));
+		prices.put(new Pair("USDT_B"), valueOf(1.0));
+		prices.put(new Pair("USDT_C"), valueOf(1.0));
+		prices.put(new Pair("USDT_D"), valueOf(1.0));
+		prices.put(new Pair("USDT_E"), valueOf(1.0));
+		prices.put(new Pair("BTC_A"), valueOf(2.0));
+		prices.put(new Pair("BTC_B"), valueOf(2.0));
+		prices.put(new Pair("BTC_C"), valueOf(2.0));
+		prices.put(new Pair("BTC_D"), valueOf(2.0));
+		prices.put(new Pair("BTC_E"), valueOf(2.0));
+		
+		Map<Pair, BigDecimal> pairVolumes = new HashMap<>();
+		pairVolumes.put(new Pair("USDT_A"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT_B"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT_C"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT_D"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT_E"), valueOf(10.0));
+		
+		new Trader(new Prices(prices, pairVolumes), wallet, log).generateOperations();
 //		expected output:
-//		A<-->B: -6,00000000
-//		A<-->D: -1,00000000
-//		D<-->C: +5,00000000
+//		
+//		A --> B: -6,00%
+//		BTC_B: SELL 30,00000000 at rate 2,00000000 (30,00 USD)
+//		BTC_A: BUY 29,70000000 at rate 2,00000000 (29,70 USD)
+//		A --> D: -1,00%
+//		BTC_D: SELL 5,00000000 at rate 2,00000000 (5,00 USD)
+//		BTC_A: BUY 4,95000000 at rate 2,00000000 (4,95 USD)
+//		D --> C: +5,00%
+//		BTC_D: SELL 25,00000000 at rate 2,00000000 (25,00 USD)
+//		BTC_C: BUY 24,75000000 at rate 2,00000000 (24,75 USD)
+//		Overall change: 119,40 USD
+//		Overall fee: 0,30 USD
+		
 	}
 	
 }

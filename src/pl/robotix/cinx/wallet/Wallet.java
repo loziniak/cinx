@@ -9,6 +9,8 @@ import java.util.function.BiConsumer;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener.Change;
 import pl.robotix.cinx.Currency;
 
 public class Wallet {
@@ -20,7 +22,7 @@ public class Wallet {
 	final ObservableMap<Currency, WalletEntry> sliders;
 	
 
-	public Wallet(Map<Currency, BigDecimal> balance) {
+	public Wallet(Map<Currency, BigDecimal> balance, ObservableSet<Currency> chartCurrencies) {
 		sliders = FXCollections.observableMap(new HashMap<>());
 
 		double[] walletUSDHolder = { 0.0 };
@@ -32,6 +34,15 @@ public class Wallet {
 		balance.forEach((currency, usd) -> {
 			add(currency, usd.doubleValue());
 		});
+		
+		chartCurrencies.addListener((Change<? extends Currency> change) -> {
+			if (change.wasAdded()) {
+				add(change.getElementAdded());
+			}
+			if (change.wasRemoved()) {
+				remove(change.getElementRemoved());
+			}
+		});		
 	}
 
 	private void add(Currency c, double usd) {

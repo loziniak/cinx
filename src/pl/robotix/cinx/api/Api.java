@@ -3,14 +3,9 @@ package pl.robotix.cinx.api;
 import static java.util.stream.Collectors.toList;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 import com.cf.client.poloniex.PoloniexExchangeService;
@@ -42,36 +37,6 @@ public class Api {
 	}
 	
 	
-	public List<Point> retrieveUSDPriceHistory(Currency currency, TimeRange range) {
-		List<Point> usdPriceHistory = initWithOnes(range);
-		
-//		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
-		List<Pair> pairs = prices.pairsToComputeBTCFor(currency);
-		pairs.forEach((intermediatePair) -> {
-			List<Point> intermediateHistory = retrievePriceHistory(intermediatePair, range);
-
-			Iterator<Point> intermediateIterator = intermediateHistory.iterator();
-			Point intermediatePoint = null;
-			int filled = 0;
-			try {
-				for (Point usdPoint: usdPriceHistory) {
-					intermediatePoint = intermediateIterator.next();
-					usdPoint.value *= intermediatePoint.value;
-					filled++;
-				}
-				
-			} catch (NoSuchElementException e) { // intermediateHistory had less data than necessary
-				Iterator<Point> i = usdPriceHistory.listIterator(filled);
-				while (i.hasNext()) {
-					i.next().value *= intermediatePoint.value; // fill using last known price
-				}
-			}
-				
-		});
-		
-		return usdPriceHistory;
-	}
-	
 	public Map<Currency, BigDecimal> retrieveUSDBalance() {
 		throttleControl();
 		
@@ -85,19 +50,6 @@ public class Api {
 		});
 		
 		return usdBalance;
-	}
-	
-//	public Map<Currency, BigDecimal> retrieveUSDBalanceMock() {
-//		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
-//		usdBalance.put(USDT, valueOf(1000.0));
-//		usdBalance.put(BTC, valueOf(2500.0));
-//		usdBalance.put(new Currency("MAID"), valueOf(700.0));
-//		
-//		return usdBalance;
-//	}
-	
-	public void refreshPrices() {
-		prices = retrievePrices();
 	}
 	
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
@@ -115,19 +67,7 @@ public class Api {
 	}
 
 
-	private List<Point> initWithOnes(TimeRange range) {
-		List<Point> usdPriceHistory = new LinkedList<>();
-		long start = range.getStart();
-		for (int i=0; i < range.getPointsCount(); i++) {
-			usdPriceHistory.add(new Point(
-				LocalDateTime.ofEpochSecond(start + i * range.densitySeconds, 0, ZoneOffset.UTC),
-				1.0)
-			);
-		}
-		return usdPriceHistory;
-	}
-	
-    protected List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
+    public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
         throttleControl();
         
         Function<PoloniexChartData, Point> pointCreator;
@@ -144,7 +84,7 @@ public class Api {
         .collect(toList());
     }
     
-	private Prices retrievePrices() {
+	public Prices retrievePrices() {
 		throttleControl();
 		
 		Map<Pair, BigDecimal> prices = new HashMap<>();
@@ -170,9 +110,4 @@ public class Api {
 		lastOpMillis = System.currentTimeMillis();
 	}
 	
-	
-	public Prices getPrices() {
-		return prices;
-	}
-
 }

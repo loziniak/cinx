@@ -4,7 +4,6 @@ import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -23,6 +24,7 @@ import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.api.CachedApi;
 import pl.robotix.cinx.graph.Graph;
+import pl.robotix.cinx.graph.PricesHistory;
 import pl.robotix.cinx.trade.TradeUI;
 import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
@@ -30,20 +32,19 @@ import pl.robotix.cinx.wallet.WalletUI;
 
 public class App extends Application {
 	
-	public static final Instant NOW = Instant.now();
-	
 	private static final String CONFIG_FILE = "./app.properties";
 
 	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
 	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
 
+	public static Prices prices;
 
 	private Api api;
-	private Graph graph = new Graph();
+	private PricesHistory pricesHistory;
 	private Wallet wallet;
 	private Trader trader;
+	private ObservableSet<Currency> chartCurrencies = FXCollections.observableSet();
 	
-	private CurrencySelector currencies = new CurrencySelector();
 	private Logger log = new Logger();
 
 	@Override
@@ -54,27 +55,27 @@ public class App extends Application {
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
 
 		api = new CachedApi(poloniexApiKey, poloniexSecret);
-		wallet = new Wallet(balanceWithBTCAndUSDT());
-		trader = new Trader(api, wallet, log);
+		prices = api.retrievePrices();
+		pricesHistory = new PricesHistory(api, chartCurrencies);
+		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies);
+		trader = new Trader(prices, wallet, log);
 
 		layout(primaryStage);
 
-		currencies.addDisplayListener(api, graph);
-
-		currencies.addAll(wallet.getCurrencies());
+		chartCurrencies.addAll(wallet.getCurrencies());
 		Config config = new Config(CONFIG_FILE);
-		currencies.addAll(config.getSubscribedCurrencies());
+		chartCurrencies.addAll(config.getSubscribedCurrencies());
 
-		currencies.addAll(random(2));
+		chartCurrencies.addAll(random(2));
 	}
 	
 	private Set<Currency> random(int count) {
 		double fromFirst = 0.75;
 		
-		Set<Currency> currencySet = api.getPrices().getAllCurrencies();
-		currencySet.removeAll(currencies.selected());
+		Set<Currency> currencySet = prices.getAllCurrencies();
+		currencySet.removeAll(chartCurrencies);
 		List<Currency> currencyList = new ArrayList<>(currencySet);
-		currencyList.sort(api.getPrices().byVolume());
+		currencyList.sort(prices.byVolume());
 		
 		Set<Currency> random = new HashSet<>();
 		do {
@@ -87,7 +88,7 @@ public class App extends Application {
 	
 	private void layout(Stage stage) {
 		Tab trade = new Tab("Trade");
-		TradeUI tradePane = new TradeUI(log, trader);
+		TradeUI tradePane = new TradeUI(log, trader, api);
 		trade.setClosable(false);
 		trade.setContent(tradePane);
 		
@@ -104,7 +105,7 @@ public class App extends Application {
 
 	private VBox analyzeLayout(Tab trade) {
 		HBox top = new HBox();
-		top.getChildren().add(graph.getChart());
+		top.getChildren().add(new Graph(pricesHistory));
 		
 		WalletUI walletUI = new WalletUI(wallet);
 		walletUI.setPadding(new Insets(20));
@@ -116,7 +117,8 @@ public class App extends Application {
 		Button generateOperations = new Button("Generate operations");
 		generateOperations.setOnAction((event) -> {
 			trade.getTabPane().getSelectionModel().select(trade);
-			api.refreshPrices();
+			prices = api.retrievePrices();
+			trader.setPrices(prices);
 			trader.generateOperations();
 		});
 		topRight.getChildren().add(generateOperations);
@@ -124,14 +126,13 @@ public class App extends Application {
 
 		VBox outer = new VBox();
 		outer.getChildren().add(top);
-		outer.getChildren().add(currencies.buttons(api, wallet));
+		outer.getChildren().add(new CurrencySelector(api, wallet, chartCurrencies));
 		outer.setPadding(new Insets(10));
 		return outer;
 	}
 	
 	
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
-//		Map<Currency, BigDecimal> balance = api.retrieveUSDBalanceMock();
 		Map<Currency, BigDecimal> balance = api.retrieveUSDBalance();
 		if (!balance.containsKey(USDT)) {
 			balance.put(USDT, BigDecimal.valueOf(0.0));

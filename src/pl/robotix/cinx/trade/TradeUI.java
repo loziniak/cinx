@@ -12,17 +12,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import pl.robotix.cinx.Logger;
+import pl.robotix.cinx.api.Api;
 
 public class TradeUI extends StackPane {
 	
 	private VBox logArea = new VBox();
 	private ScrollPane scroll = new ScrollPane(logArea);
 	
-	private final Trader trader;
 	
-	public TradeUI(Logger logger, Trader trader) {
-		this.trader = trader;
-
+	public TradeUI(Logger logger, Trader trader, final Api api) {
+		super();
 		logArea.setPadding(new Insets(20));
 		
 		scroll.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
@@ -32,7 +31,7 @@ public class TradeUI extends StackPane {
 		StackPane.setAlignment(execute, Pos.BOTTOM_RIGHT);
 		StackPane.setMargin(execute, new Insets(40));
 		execute.setOnAction((event) -> {
-			this.trader.executeOperations();
+			trader.executeOperations(api);
 		});
 		getChildren().add(execute);
 		
