@@ -2,13 +2,16 @@ package pl.robotix.cinx.graph;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -42,10 +45,20 @@ public class PricesHistory {
 				displayedCurrencies.remove(change.getElementRemoved());
 			}
 		});
+		
+		timeRange.addListener((ObservableValue<? extends TimeRange> observable, TimeRange oldValue, TimeRange newValue) -> {
+			if (oldValue != newValue) {
+				Set<Currency> currencies = new HashSet<>(displayedCurrencies.keySet());
+				currencies.forEach((currency) -> {
+					displayedCurrencies.remove(currency);
+					displayedCurrencies.put(currency, retrieveUSDPriceHistory(currency));
+				});
+			}
+		});
 	}
 
 	public List<Point> retrieveUSDPriceHistory(Currency currency) {
-		List<Point> usdPriceHistory = initWithOnes(timeRange.get());
+		List<Point> usdPriceHistory = initWithOnes(timeRange.getValue());
 		
 //		List<Pair> pairs = prices.pairsToComputeUSDFor(currency);
 		List<Pair> pairs = App.prices.pairsToComputeBTCFor(currency);
