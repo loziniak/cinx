@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import pl.robotix.cinx.Logger;
-import pl.robotix.cinx.api.Api;
+import pl.robotix.cinx.api.AsyncThrottledCachedApi;
 
 public class TradeUI extends StackPane {
 	
@@ -20,7 +20,7 @@ public class TradeUI extends StackPane {
 	private ScrollPane scroll = new ScrollPane(logArea);
 	
 	
-	public TradeUI(Logger logger, Trader trader, final Api api) {
+	public TradeUI(Logger logger, Trader trader, final AsyncThrottledCachedApi api) {
 		super();
 		logArea.setPadding(new Insets(20));
 		

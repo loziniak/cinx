@@ -9,12 +9,11 @@ import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
-import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.wallet.Wallet;
 
 public class CurrencySelector extends FlowPane {
 
-	public CurrencySelector(Api api, Wallet wallet, ObservableSet<Currency> chartCurrencies) {
+	public CurrencySelector(Wallet wallet, ObservableSet<Currency> chartCurrencies) {
 		super();
 		setVgap(5);
 		setHgap(5);

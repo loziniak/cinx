@@ -22,7 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.Api;
-import pl.robotix.cinx.api.CachedApi;
+import pl.robotix.cinx.api.AsyncThrottledCachedApi;
 import pl.robotix.cinx.graph.Graph;
 import pl.robotix.cinx.graph.PricesHistory;
 import pl.robotix.cinx.trade.TradeUI;
@@ -39,7 +39,7 @@ public class App extends Application {
 
 	public static Prices prices;
 
-	private Api api;
+	private AsyncThrottledCachedApi api;
 	private PricesHistory pricesHistory;
 	private Wallet wallet;
 	private Trader trader;
@@ -54,7 +54,7 @@ public class App extends Application {
 		String poloniexApiKey = System.getenv(POLONIEX_APIKEY_ENV);
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
 
-		api = new CachedApi(poloniexApiKey, poloniexSecret);
+		api = new AsyncThrottledCachedApi(new Api(poloniexApiKey, poloniexSecret), 2000, 2);
 		prices = api.retrievePrices();
 		pricesHistory = new PricesHistory(api, chartCurrencies);
 		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies);
@@ -126,7 +126,7 @@ public class App extends Application {
 
 		VBox outer = new VBox();
 		outer.getChildren().add(top);
-		outer.getChildren().add(new CurrencySelector(api, wallet, chartCurrencies));
+		outer.getChildren().add(new CurrencySelector(wallet, chartCurrencies));
 		outer.setPadding(new Insets(10));
 		return outer;
 	}
@@ -147,4 +147,5 @@ public class App extends Application {
 	public static void main(String[] args) {
 		launch(args);
 	}
+
 }

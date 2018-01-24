@@ -22,24 +22,17 @@ import pl.robotix.cinx.TimeRange;
 
 public class Api {
 	
-	private static final long THROTTLE_MS = 1000; // 1 call per second
-	
 	private PoloniexExchangeService service;
-	
+
 	private Prices prices;
-	
-	private long lastOpMillis;
 	
 	public Api(String poloniexApiKey, String poloniexSecret) {
 		service = new PoloniexExchangeService(poloniexApiKey, poloniexSecret);
-		lastOpMillis = System.currentTimeMillis();
 		prices = retrievePrices();
 	}
 	
 	
 	public Map<Currency, BigDecimal> retrieveUSDBalance() {
-		throttleControl();
-		
 		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
 		Map<String, PoloniexCompleteBalance> balanceData = service.returnBalance(false);
 		balanceData.entrySet().forEach((entry) -> {
@@ -53,23 +46,17 @@ public class Api {
 	}
 	
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
-		throttleControl();
-		
 		PoloniexOrderResult res = service.buy(pair.toString(), rate, amount, true, false, false);
 		return res.error == null || res.error.isEmpty();
 	}
 
 	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
-		throttleControl();
-		
 		PoloniexOrderResult res = service.sell(pair.toString(), rate, amount, true, false, false);
 		return res.error == null || res.error.isEmpty();
 	}
 
 
     public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
-        throttleControl();
-        
         Function<PoloniexChartData, Point> pointCreator;
         if (pair.isReverse()) {
         	pointCreator = (point) -> new Point(point.date.toLocalDateTime() , 1.0 / point.weightedAverage.doubleValue());
@@ -85,8 +72,6 @@ public class Api {
     }
     
 	public Prices retrievePrices() {
-		throttleControl();
-		
 		Map<Pair, BigDecimal> prices = new HashMap<>();
 		Map<Pair, BigDecimal> volumes = new HashMap<>();
 		Map<String, PoloniexTicker> tickerAll = service.returnTicker();
@@ -96,18 +81,6 @@ public class Api {
 		});
 		
 		return new Prices(prices, volumes);
-	}
-	
-	
-	private void throttleControl() {
-		try {
-			long waitMs = THROTTLE_MS - (System.currentTimeMillis() - lastOpMillis);
-			if (waitMs > 0) { 
-				Thread.sleep(waitMs);
-			}
-		} catch (InterruptedException e) {
-		}
-		lastOpMillis = System.currentTimeMillis();
 	}
 	
 }

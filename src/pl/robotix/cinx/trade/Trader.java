@@ -21,7 +21,7 @@ import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Prices;
-import pl.robotix.cinx.api.Api;
+import pl.robotix.cinx.api.AsyncThrottledCachedApi;
 import pl.robotix.cinx.wallet.Wallet;
 
 public class Trader {
@@ -122,7 +122,7 @@ public class Trader {
 		return operations;
 	}
 	
-	public void executeOperations(Api api) {
+	public void executeOperations(AsyncThrottledCachedApi api) {
 		operations.forEach((operation) -> {
 			
 			switch (operation.type) {
