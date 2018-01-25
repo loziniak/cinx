@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javafx.application.Application;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
@@ -43,7 +45,9 @@ public class App extends Application {
 	private PricesHistory pricesHistory;
 	private Wallet wallet;
 	private Trader trader;
+
 	private ObservableSet<Currency> chartCurrencies = FXCollections.observableSet();
+	private ObjectProperty<Currency> highlihtCurrency = new SimpleObjectProperty<>();
 	
 	private Logger log = new Logger();
 
@@ -105,9 +109,9 @@ public class App extends Application {
 
 	private VBox analyzeLayout(Tab trade) {
 		HBox top = new HBox();
-		top.getChildren().add(new Graph(pricesHistory));
+		top.getChildren().add(new Graph(pricesHistory, highlihtCurrency));
 		
-		WalletUI walletUI = new WalletUI(wallet);
+		WalletUI walletUI = new WalletUI(wallet, highlihtCurrency);
 		walletUI.setPadding(new Insets(20));
 		walletUI.setSpacing(10);
 		

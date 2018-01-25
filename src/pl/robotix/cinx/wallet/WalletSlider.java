@@ -3,6 +3,7 @@ package pl.robotix.cinx.wallet;
 import static javafx.geometry.Orientation.VERTICAL;
 
 import javafx.beans.binding.When;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
@@ -34,7 +35,7 @@ public class WalletSlider extends VBox {
 	
 	private final CheckBox freeze = new CheckBox();
 	
-	public WalletSlider(WalletEntry s) {
+	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlihtCurrency) {
 		super();
 		currency = s.getCurrency();
 		
@@ -71,6 +72,10 @@ public class WalletSlider extends VBox {
 		});
 		
 		s.bindIsChanging(slider.valueChangingProperty());
+		
+		setOnMouseEntered((event) -> {
+			highlihtCurrency.set(currency);
+		});
 	}
 
 	public void disable() {

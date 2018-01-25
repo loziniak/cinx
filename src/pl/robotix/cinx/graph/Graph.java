@@ -6,7 +6,10 @@ import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart.Data;
@@ -23,7 +26,7 @@ public class Graph extends VBox {
 	private ObservableArrayList<Series<LocalDateTime,Number>> series = new ObservableArrayList<>();
 	private TimeAxis dates;
 	
-	public Graph(final PricesHistory pricesHistory) {
+	public Graph(final PricesHistory pricesHistory, ObjectProperty<Currency> highlihtCurrency) {
 		super();
 
 		ChoiceBox<TimeRange> timeRanges = new ChoiceBox<>(observableArrayList(TimeRange.values()));
@@ -41,12 +44,19 @@ public class Graph extends VBox {
 		chart.setData(series);
 		getChildren().add(chart);
 		
-
 		pricesHistory.displayedCurrencies.addListener((MapChangeListener.Change<? extends Currency, ? extends List<Point>> change) -> {
 			if (change.wasAdded()) {
 				display(change.getValueAdded(), change.getKey());
 			} else if (change.wasRemoved()) {
 				remove(change.getKey());
+			}
+		});
+		
+		highlihtCurrency.addListener((ObservableValue<? extends Currency> observable, Currency oldValue, Currency newValue) -> {
+			if ((newValue == null && oldValue != null)
+					|| newValue != null && !newValue.equals(oldValue)) {
+				Series<LocalDateTime, Number> removed = remove(newValue);
+				display(removed.getData(), newValue);
 			}
 		});
 	}
@@ -60,13 +70,17 @@ public class Graph extends VBox {
 		
 		dates.newRange(prices.get(0).date, last.date);
 		
+		display(percents, currency);
+	}
+
+	private void display(ObservableList<Data<LocalDateTime,Number>> data, Currency currency) {
 		Series<LocalDateTime,Number> s = new Series<>();
-		s.setData(percents);
+		s.setData(data);
 		s.setName(currency.symbol);
 		series.add(s);
 	}
 	
-	public void remove(Currency currency) {
+	public Series<LocalDateTime, Number> remove(Currency currency) {
 		Iterator<Series<LocalDateTime, Number>> i = series.iterator();
 		int index = -1;
 		boolean found = false;
@@ -77,8 +91,9 @@ public class Graph extends VBox {
 			}
 		}
 		if (found) {
-			series.remove(index);
+			return series.remove(index);
 		}
+		return null;
 	}
 
 }
