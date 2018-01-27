@@ -97,7 +97,7 @@ public class PricesHistory {
 				List<Point> usdPriceHistory = initWithOnes(timeRange.getValue());
 				histories.forEach((intermediateHistory) -> {
 					Iterator<Point> intermediateIterator = intermediateHistory.iterator();
-					Point intermediatePoint = null;
+					Point intermediatePoint = usdPriceHistory.get(0);
 					int filled = 0;
 					try {
 						for (Point usdPoint: usdPriceHistory) {

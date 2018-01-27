@@ -57,28 +57,26 @@ public class AsyncThrottledCachedApi {
 		return api.retrievePrices();
 	}
 	
-	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
-		syncThrottleControl();
-		return api.buy(pair, rate, amount);
+	public void buy(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<Boolean> callback) {
+		asyncRunRecursive(() -> api.buy(pair, rate, amount), callback, 0, false);
 	}
 	
-	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
-		syncThrottleControl();
-		return api.sell(pair, rate, amount);
+	public void sell(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<Boolean> callback) {
+		asyncRunRecursive(() -> api.sell(pair, rate, amount), callback, 0, false);
 	}
-	
 
 	public void retrievePriceHistory(Pair pair, TimeRange range, final Consumer<List<Point>> callback) {
 		asyncCache(() -> api.retrievePriceHistory(pair, range), 
 				"retrievePriceHistory_" + pair + "_" + range,
-				callback);
+				callback, true);
 	}
 	
 	
 	
-	private <T> void asyncRunRecursive(Callable<T> operation, Consumer<T> callback, int depth) {
-		if (depth >= maxRetries) {
-			System.out.println(LocalTime.now().toString()+" "+depth+" retries.");
+	private <T> void asyncRunRecursive(Callable<T> operation, Consumer<T> callback, int depth, boolean timeout) {
+		if (timeout
+				&& depth >= maxRetries) {
+			System.out.println(LocalTime.now().toString()+" timeout: "+depth+" retries.");
 			return;
 		}
 
@@ -106,8 +104,10 @@ public class AsyncThrottledCachedApi {
 			
 			@Override
 			protected void cancelled() {
-				System.out.println(LocalTime.now().toString()+" "+depth+" retrying.");
-				asyncRunRecursive(operation, callback, depth + 1);
+				if (timeout) {
+					System.out.println(LocalTime.now().toString()+" timeout: "+depth+" retrying.");
+					asyncRunRecursive(operation, callback, depth + 1, true);
+				}
 			}
 		};
 		
@@ -127,20 +127,20 @@ public class AsyncThrottledCachedApi {
 		};
 		
 		long asyncWaitMs = THROTTLE_MS - (System.currentTimeMillis() - lastOpScheduledMillis.get());
-//		System.out.println(LocalTime.now().toString()+" async wait ms "+asyncWaitMs);
 		if (asyncWaitMs < 0) {
 			asyncWaitMs = 0;
 		}
 		lastOpScheduledMillis.set(System.currentTimeMillis() + asyncWaitMs);
 
 		executor.schedule(task, asyncWaitMs, TimeUnit.MILLISECONDS);
-		executor.schedule(timeoutTask, asyncWaitMs + timeoutMs, TimeUnit.MILLISECONDS);
+		if (timeout) {
+			executor.schedule(timeoutTask, asyncWaitMs + timeoutMs, TimeUnit.MILLISECONDS);
+		}
 	}
 
 	private void syncThrottleControl() {
 		try {
 			long waitMs = THROTTLE_MS - (System.currentTimeMillis() - lastOpMillis.get());
-//			System.out.println(LocalTime.now().toString()+" wait ms "+waitMs);
 			if (waitMs > 0) {
 				Thread.sleep(waitMs);
 			}
@@ -162,7 +162,7 @@ public class AsyncThrottledCachedApi {
 		return value;
 	}
 
-	private <R> void asyncCache(Supplier<R> operation, String key, Consumer<R> callback) {
+	private <R> void asyncCache(Supplier<R> operation, String key, Consumer<R> callback, boolean timeout) {
 		@SuppressWarnings("unchecked")
 		R value = (R) cache.get(key);
 		if (value == null) {
@@ -170,7 +170,7 @@ public class AsyncThrottledCachedApi {
 				R val = operation.get();
 				cache.put(key, val);
 				return val;
-			}, callback, 0);
+			}, callback, 0, timeout);
 		} else {
 			System.out.println("From cache: "+key);
 			callback.accept(value);

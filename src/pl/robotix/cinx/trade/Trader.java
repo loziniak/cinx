@@ -127,25 +127,26 @@ public class Trader {
 			
 			switch (operation.type) {
 			case BUY:
-				boolean buySuccess = api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount);
-				if (buySuccess) {
-					log.info("finished buy: "+operation.pair);
-				} else {
-					log.info("ERROR buying "+operation.pair);
-				}
+				api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount, (buySuccess) -> {
+					if (buySuccess) {
+						log.info("finished buy: "+operation.pair);
+					} else {
+						log.info("ERROR buying "+operation.pair);
+					}
+				});
 				break;
 			case SELL:
-				boolean sellSuccess = api.sell(operation.pair, operation.rate.multiply(SELL_RATE_MOD), operation.amount);
-				if (sellSuccess) {
-					log.info("finished sell: "+operation.pair);
-				} else {
-					log.info("ERROR selling "+operation.pair);
-				}
+				api.sell(operation.pair, operation.rate.multiply(SELL_RATE_MOD), operation.amount, (sellSuccess)-> {
+					if (sellSuccess) {
+						log.info("finished sell: "+operation.pair);
+					} else {
+						log.info("ERROR selling "+operation.pair);
+					}
+				});
 				break;
 			}
 			
 		});
-		log.info("=================================");
 	}
 	
 	private List<Operation> operationsFor(Currency from, Currency to, BigDecimal usdChange) {
