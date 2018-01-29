@@ -22,6 +22,8 @@ import pl.robotix.cinx.TimeRange;
 
 public class Api {
 	
+	private static final int NONCE_ERROR_RETRY_COUNT = 2; 
+	
 	private PoloniexExchangeService service;
 
 	private Prices prices;
@@ -47,12 +49,26 @@ public class Api {
 	
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
 		PoloniexOrderResult res = service.buy(pair.toString(), rate, amount, true, false, false);
-		return res.error == null || res.error.isEmpty();
+
+		for (int i = 0; i < NONCE_ERROR_RETRY_COUNT; i++) {
+			if (res.error != null && res.error.startsWith("Nonce must be greater than ")) {
+				System.out.println("Buy "+pair+" retrying.");
+		                    res = service.buy(pair.toString(), rate, amount, true, false, false);
+			}
+		}
+		return res.error == null;
 	}
 
 	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
 		PoloniexOrderResult res = service.sell(pair.toString(), rate, amount, true, false, false);
-		return res.error == null || res.error.isEmpty();
+
+		for (int i = 0; i < NONCE_ERROR_RETRY_COUNT; i++) {
+			if (res.error != null && res.error.startsWith("Nonce must be greater than ")) {
+				System.out.println("Sell "+pair+" retrying.");
+		                    res = service.sell(pair.toString(), rate, amount, true, false, false);
+			}
+		}
+		return res.error == null;
 	}
 
 
