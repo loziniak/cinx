@@ -1,55 +1,35 @@
 package pl.robotix.cinx.wallet;
 
-import static javafx.geometry.Orientation.VERTICAL;
-
 import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.util.StringConverter;
 import pl.robotix.cinx.Currency;
 
 public class WalletSlider extends VBox {
 
-	private static final EventHandler<MouseEvent> DRAG_FILTER = (event) -> {
-		event.consume();
-	};
-	
-	private static final StringConverter<Double> SINGLE_DIGIT = new StringConverter<Double>() {
-		@Override public String toString(Double value) { return String.format("%.1f", value); }
-		@Override public Double fromString(String label) { return new Double(label); }
-	};
-	
 	private final Currency currency;
 	
-	private final Slider slider = new Slider();
+	private final ExponentialSlider slider = new ExponentialSlider(0, 20, 100);
 
 	private final Label percentChange = new Label(String.format("%+.1f", 0.0));
 	
 	private final CheckBox freeze = new CheckBox();
 	
+
 	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlihtCurrency) {
 		super();
 		currency = s.getCurrency();
 		
 		getChildren().add(new Text(s.getCurrency().symbol));
 		getChildren().add(percentChange);
-		getChildren().add(slider);
+		getChildren().add(slider.node());
 		getChildren().add(freeze);
 		
-		slider.setOrientation(VERTICAL);
-		slider.setMin(0.0);
-		slider.setMax(100.0);
-		slider.setShowTickLabels(true);
-		slider.setLabelFormatter(SINGLE_DIGIT);
-		slider.setMinHeight(250);
 		slider.valueProperty().bindBidirectional(s.percent);
 
 		percentChange.textProperty().bind(s.percentChange.asString("%+.1f"));
@@ -65,9 +45,9 @@ public class WalletSlider extends VBox {
 		s.enabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
 			boolean enabled = newValue;
 			if (enabled) {
-				enable();
+				slider.enable();
 			} else {
-				disable();
+				slider.disable();
 			}
 		});
 		
@@ -78,16 +58,6 @@ public class WalletSlider extends VBox {
 		});
 	}
 
-	public void disable() {
-		slider.setDisable(true);
-		slider.addEventFilter(MouseEvent.MOUSE_DRAGGED, DRAG_FILTER);
-	}
-
-	public void enable() {
-		slider.setDisable(false);
-		slider.removeEventFilter(MouseEvent.MOUSE_DRAGGED, DRAG_FILTER);
-	}
-	
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof WalletSlider && ((WalletSlider) obj).currency.equals(this.currency);
