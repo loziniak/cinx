@@ -47,7 +47,7 @@ public class TradeUI extends StackPane {
 		if (stroke != null) text.setStroke(stroke);
 		text.setOpacity(0.5);
 		logArea.getChildren().add(text);
-		scroll.setVvalue(scroll.getVmin());
+		scroll.setVvalue(scroll.getVmax());
 	}
 
 }
