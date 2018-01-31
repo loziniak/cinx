@@ -95,5 +95,13 @@ public abstract class MyAxis<T> extends Axis<T> {
 		
 		return tickValues;
 	}
+	
+	public T getLower() {
+		return lower;
+	}
+	
+	public T getUpper() {
+		return upper;
+	}
 
 }
