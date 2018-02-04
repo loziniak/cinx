@@ -8,20 +8,24 @@ import static pl.robotix.cinx.Pair.USDT_BTC;
 import static pl.robotix.cinx.trade.Operation.Type.BUY;
 import static pl.robotix.cinx.trade.Operation.Type.SELL;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.api.AsyncThrottledCachedApi;
+import pl.robotix.cinx.log.OperationLog;
 import pl.robotix.cinx.wallet.Wallet;
 
 public class Trader {
@@ -39,32 +43,46 @@ public class Trader {
 	private final Wallet wallet;
 	private final Logger log;
 	
+	private OperationLog operationLog;
+	
 	private List<Operation> operations = new ArrayList<>();
 	
-	public Trader(Prices prices, Wallet wallet, Logger log) {
+	public Trader(Prices prices, Wallet wallet, Logger log, String operationLogFile) {
 		this.prices = prices;
 		this.wallet = wallet;
 		this.log = log;
+		try {
+			this.operationLog = new OperationLog(operationLogFile);
+		} catch (IOException e) {
+			System.err.println("Could not open operation log: "+e.getMessage());
+		}
+	}
+	
+	public void close() {
+		operationLog.close();
 	}
 	
 	public List<Operation> generateOperations() {
 		operations.clear();
 
 		Map<Currency, Double> changes = wallet.getPercentChanges();
-		if (changes.isEmpty()) {
-			return Collections.emptyList();
-		}
 		
-		List<Currency> biggest = biggest(changes);
-		correctDrift(changes, biggest.get(0));
-		
+		List<Currency> toProcess = altcoinClearingsFirst(changes);
+		correctDrift(changes);
+
 		List<Currency> positive = new ArrayList<>();
 		List<Currency> negative = new ArrayList<>();
-		split(positive, negative, biggest, changes);
+		split(positive, negative, toProcess, changes);
 		
-		while(!biggest.isEmpty()) {
-			Currency processed = biggest.remove(0);
-			double processedChange = changes.remove(processed);
+		while(!toProcess.isEmpty()) {
+			Currency processed = toProcess.remove(0);
+			double processedChange = changes.get(processed);
+			boolean clearedToBTC = false;
+			if (isAltcoinClearing(processed, processedChange)) {
+				operations.add(sellAll(new Pair(BTC, processed)));
+				clearedToBTC = true;
+			}
+			changes.remove(processed);
 
 			List<Currency> secondSource;
 			if (processedChange < 0.0) {
@@ -87,13 +105,13 @@ public class Trader {
 				double secondChange = changes.get(second);
 				if (abs(processedChange) >= abs(secondChange)) {
 					secondSource.remove(second);
-					biggest.remove(second);
+					toProcess.remove(second);
 					changes.remove(second);
 					
 					log.info("" + processed + " --> " + second
 							+ ": " + String.format(LOG_PERCENT_FORMAT, secondChange));
 					
-					operations.addAll(operationsFor(processed, second, percentToUsd(secondChange)));
+					operations.addAll(operationsFor(processed, second, percentToUsd(secondChange), clearedToBTC));
 					
 					processedChange += secondChange;
 				} else { // abs(processedChange) < abs(secondChange)
@@ -103,7 +121,7 @@ public class Trader {
 					log.info("" + processed + " --> " + second
 							+ ": " + String.format(LOG_PERCENT_FORMAT, - processedChange));
 					
-					operations.addAll(operationsFor(processed, second, percentToUsd(- processedChange)));
+					operations.addAll(operationsFor(processed, second, percentToUsd(- processedChange), clearedToBTC));
 					
 					processedChange = 0.0;
 				}
@@ -112,6 +130,9 @@ public class Trader {
 		
 		double[] usdOverallChangeHolder = {0.0};
 		operations.forEach((op) -> {
+			if (op == null) {
+				return;
+			}
 			usdOverallChangeHolder[0] += op.amount.doubleValue() * prices.getUSDFor(op.pair.base).doubleValue();
 		});
 		log.info("Overall change: " + String.format(LOG_USD_FORMAT, usdOverallChangeHolder[0]));
@@ -123,7 +144,15 @@ public class Trader {
 	}
 	
 	public void executeOperations(AsyncThrottledCachedApi api) {
+		for (Entry<Currency, Double> entry: wallet.getPercentChanges().entrySet()) {
+			double percent = entry.getValue();
+			operationLog.log(entry.getKey(), percent, percentToUsd(percent),
+					percent < 0 ? SELL : BUY);
+		}
 		operations.forEach((operation) -> {
+			if (operation == null) {
+				return;
+			}
 			
 			switch (operation.type) {
 			case BUY:
@@ -149,7 +178,7 @@ public class Trader {
 		});
 	}
 	
-	private List<Operation> operationsFor(Currency from, Currency to, BigDecimal usdChange) {
+	private List<Operation> operationsFor(Currency from, Currency to, BigDecimal usdChange, boolean clearedToBTC) {
 		if (usdChange.compareTo(BigDecimal.ZERO) < 0) {
 			Currency tmp = to;
 			to = from;
@@ -178,13 +207,16 @@ public class Trader {
 		} else {
 			if (to.equals(BTC)) {
 				ops = new Operation[] {
+						clearedToBTC ? null :
 						sell(new Pair(BTC, from), usdChange)};
 			} else if (to.equals(USDT)) {
 				ops = new Operation[] {
+						clearedToBTC ? null :
 						sell(new Pair(BTC, from), usdChange),
 						sell(         USDT_BTC, usdChange.multiply(TRANSITION_RATE_MOD))};
 			} else {
 				ops = new Operation[] {
+						clearedToBTC ? null :
 						sell(new Pair(BTC, from), usdChange),
 						buy( new Pair(BTC, to), usdChange.multiply(TRANSITION_RATE_MOD))};
 			}
@@ -198,7 +230,7 @@ public class Trader {
 		op.pair = pair;
 		op.amount = usd.divide(prices.getRate(new Pair(USDT, pair.base)), MathContext.DECIMAL64);
 		op.rate = prices.getRate(pair);
-		describe(op, usd);
+		describe(op, usd, false);
 
 		return op;
 	}
@@ -208,25 +240,55 @@ public class Trader {
 		op.pair = pair;
 		op.amount = usd.divide(prices.getRate(new Pair(USDT, pair.base)), MathContext.DECIMAL64);
 		op.rate = prices.getRate(pair);
-		describe(op, usd);
+		describe(op, usd, false);
 
 		return op;
 	}
 	
-	private List<Currency> biggest(final Map<Currency, Double> changes) {
-		List<Currency> all = new LinkedList<>(changes.keySet());
-		all.sort(reverseOrder((Currency c1, Currency c2) -> Double.compare(
-				abs(changes.get(c1)), abs(changes.get(c2)))));
-		return all;
+	private Operation sellAll(Pair pair) {
+		Operation op = new Operation(SELL);
+		op.pair = pair;
+		op.amount = wallet.getOriginalAmount(pair.base);
+		op.rate = prices.getRate(pair);
+		describe(op, prices.getUSDFor(pair.base).multiply(op.amount), true);
+
+		return op;
 	}
 	
-	private void correctDrift(Map<Currency, Double> changes, final Currency currencyToCorrect) {
+	private List<Currency> altcoinClearingsFirst(final Map<Currency, Double> changes) {
+		List<Currency> clearings = new LinkedList<>();
+		List<Currency> rest = new LinkedList<>();
+		
+		changes.forEach((currency, change) -> {
+			if (isAltcoinClearing(currency, change)) {
+				clearings.add(currency);
+			} else {
+				rest.add(currency);
+			}
+		});
+		
+		clearings.addAll(rest);
+		return clearings;
+	}
+	
+	private boolean isAltcoinClearing(Currency c, double change) {
+		return !c.equals(BTC) && !c.equals(USDT)
+				&& abs(wallet.getOriginalPercent(c) + change) < 0.01;
+	}
+	
+	private void correctDrift(Map<Currency, Double> changes) {
 		double[] driftHolder = {0.0};
+		Currency[] biggestHolder = { null };
+		double[] biggestChangeHolder = { 0.0 };
 		changes.forEach((currency, change) -> {
 			driftHolder[0] += change;
+			if (biggestHolder[0] == null || biggestChangeHolder[0] < change) {
+				biggestChangeHolder[0] = change;
+				biggestHolder[0] = currency;
+			}
 		});
 		if (driftHolder[0] != 0.0) {
-			addToChange(changes, currencyToCorrect, - driftHolder[0]);
+			addToChange(changes, biggestHolder[0], - driftHolder[0]);
 			System.out.println("Percent drift corrected: " + String.format(LOG_PERCENT_FORMAT, driftHolder[0]));
 		}
 	}
@@ -245,8 +307,9 @@ public class Trader {
 		});
 	}
 	
-	private void describe(Operation op, BigDecimal usd) {
+	private void describe(Operation op, BigDecimal usd, boolean clear) {
 		String message = op.toString() + " (" + String.format(LOG_USD_FORMAT, usd) + ")";
+		if (clear) message += " CLEAR";
 		if (op.type == BUY) log.buy(message);
 		if (op.type == SELL) log.sell(message);
 	}

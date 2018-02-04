@@ -26,25 +26,22 @@ public class Api {
 	
 	private PoloniexExchangeService service;
 
-	private Prices prices;
-	
 	public Api(String poloniexApiKey, String poloniexSecret) {
 		service = new PoloniexExchangeService(poloniexApiKey, poloniexSecret);
-		prices = retrievePrices();
 	}
 	
 	
-	public Map<Currency, BigDecimal> retrieveUSDBalance() {
-		Map<Currency, BigDecimal> usdBalance = new HashMap<>();
+	public Map<Currency, BigDecimal> retrieveBalance() {
+		Map<Currency, BigDecimal> realBalance = new HashMap<>();
 		Map<String, PoloniexCompleteBalance> balanceData = service.returnBalance(false);
-		balanceData.entrySet().forEach((entry) -> {
-			Currency currency = new Currency(entry.getKey());
-			usdBalance.put(currency,
-				prices.getUSDFor(currency).multiply(entry.getValue().available.add(entry.getValue().onOrders))
+		balanceData.forEach((currencyName, balance) -> {
+			Currency currency = new Currency(currencyName);
+			realBalance.put(currency,
+					balance.available.add(balance.onOrders)
 				);
 		});
 		
-		return usdBalance;
+		return realBalance;
 	}
 	
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {

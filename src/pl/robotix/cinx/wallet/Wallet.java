@@ -12,6 +12,7 @@ import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
 import pl.robotix.cinx.Currency;
+import pl.robotix.cinx.Prices;
 
 public class Wallet {
 	
@@ -19,20 +20,24 @@ public class Wallet {
 			
 	private final double walletUSD;
 	
+	private final Prices prices;
+	
 	final ObservableMap<Currency, WalletEntry> sliders;
 	
 
-	public Wallet(Map<Currency, BigDecimal> balance, ObservableSet<Currency> chartCurrencies) {
+	public Wallet(Map<Currency, BigDecimal> balance, ObservableSet<Currency> chartCurrencies, Prices prices) {
+		this.prices = prices;
+		
 		sliders = FXCollections.observableMap(new HashMap<>());
 
 		double[] walletUSDHolder = { 0.0 };
-		balance.forEach((currency, usd) -> {
-			walletUSDHolder[0] += usd.doubleValue();
+		balance.forEach((currency, amount) -> {
+			walletUSDHolder[0] += amount.doubleValue() * prices.getUSDFor(currency).doubleValue();
 		});
 		this.walletUSD = walletUSDHolder[0];
 
-		balance.forEach((currency, usd) -> {
-			add(currency, usd.doubleValue());
+		balance.forEach((currency, amount) -> {
+			add(currency, amount);
 		});
 		
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {
@@ -45,15 +50,18 @@ public class Wallet {
 		});		
 	}
 
-	private void add(Currency c, double usd) {
-		WalletEntry slider = new WalletEntry(c, walletUSD, usd);
+	private void add(Currency c, BigDecimal originalAmount) {
+		WalletEntry slider = new WalletEntry(c,
+				100 * originalAmount.doubleValue() * prices.getUSDFor(c).doubleValue() / walletUSD,
+				originalAmount);
+		
 		if (sliders.putIfAbsent(c, slider) == null) {
 			slider.setPercentChangeHandler(onPercentChange);
 		}
 	}
 	
 	public void add(Currency c) {
-		this.add(c, 0.0);
+		this.add(c, BigDecimal.ZERO);
 	}
 	
 	public boolean canRemove(Currency c) {
@@ -116,10 +124,18 @@ public class Wallet {
 	
 	public Map<Currency, Double> getPercentChanges() {
 		Map<Currency, Double> percentChanges = new HashMap<>();
-		sliders.forEach((c, s) -> {
-			percentChanges.put(c, s.getPercentChange());
+		sliders.forEach((currency, slider) -> {
+			percentChanges.put(currency, slider.getPercentChange());
 		});
 		return percentChanges;
+	}
+	
+	public BigDecimal getOriginalAmount(Currency c) {
+		return sliders.get(c).getOriginalAmount();
+	}
+	
+	public double getOriginalPercent(Currency c) {
+		return sliders.get(c).getOriginalPercent();
 	}
 	
 	@SuppressWarnings("unused") // used in tests with reflection

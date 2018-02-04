@@ -46,10 +46,18 @@ public class AsyncThrottledCachedApi {
 		lastOpMillis = new AtomicLong(System.currentTimeMillis());
 		lastOpScheduledMillis = new AtomicLong(System.currentTimeMillis());
 	}
+	
+	public void close() {
+		executor.shutdown();
+		try {
+			executor.awaitTermination(5, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+		}
+	}
 
-	public Map<Currency, BigDecimal> retrieveUSDBalance() {
+	public Map<Currency, BigDecimal> retrieveBalance() {
 		syncThrottleControl();
-		return api.retrieveUSDBalance();
+		return api.retrieveBalance();
 	}
 	
 	public Prices retrievePrices() {

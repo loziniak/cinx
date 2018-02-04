@@ -1,5 +1,6 @@
 package pl.robotix.cinx.wallet;
 
+import java.math.BigDecimal;
 import java.util.function.BiConsumer;
 
 import javafx.beans.binding.DoubleBinding;
@@ -15,6 +16,7 @@ public class WalletEntry {
 	
 	private final Currency currency;
 	private final double originalPercent;
+	private final BigDecimal originalAmount;
 
 	final DoubleProperty percent = new SimpleDoubleProperty();
 	final DoubleBinding percentChange;
@@ -22,10 +24,11 @@ public class WalletEntry {
 	final BooleanProperty freeze = new SimpleBooleanProperty(false);
 	final BooleanProperty isChanging = new SimpleBooleanProperty(false);
 
-	public WalletEntry(Currency c, double walletUSD, double originalPrice) {
+	public WalletEntry(Currency c, double originalPercent, BigDecimal originalAmount) {
 		this.currency = c;
-		this.originalPercent = 100.0 * originalPrice / walletUSD;
+		this.originalPercent = originalPercent;
 		percent.set(originalPercent);
+		this.originalAmount = originalAmount;
 
 		percentChange = percent.subtract(originalPercent);
 
@@ -44,6 +47,10 @@ public class WalletEntry {
 	
 	public double getPercent() {
 		return percent.getValue();
+	}
+	
+	public BigDecimal getOriginalAmount() {
+		return originalAmount;
 	}
 	
 	public double getOriginalPercent() {

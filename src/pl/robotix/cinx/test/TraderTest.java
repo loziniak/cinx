@@ -24,37 +24,17 @@ public class TraderTest {
 		
 		Logger log = new Logger((message) -> System.out.println(message));
 		
-		Map<Currency, BigDecimal> balance = new HashMap<>();
-		balance.put(new Currency("A"), valueOf(100.0));
-		balance.put(new Currency("B"), valueOf(100.0));
-		balance.put(new Currency("C"), valueOf(100.0));
-		balance.put(new Currency("D"), valueOf(100.0));
-		balance.put(new Currency("E"), valueOf(100.0));
-		Wallet wallet = new Wallet(balance, FXCollections.observableSet());
-		
-		System.out.println(wallet.getPercentChanges());
-		
-		try {
-			Method m = Wallet.class.getDeclaredMethod("setPercentChanges", double[].class);
-			m.setAccessible(true);
-			m.invoke(wallet, new double[] {7, -6, 5, -6, 0} );
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		
-		System.out.println(wallet.getPercentChanges());
-		
-		Map<Pair, BigDecimal> prices = new HashMap<>();
-		prices.put(new Pair("USDT_A"), valueOf(1.0));
-		prices.put(new Pair("USDT_B"), valueOf(1.0));
-		prices.put(new Pair("USDT_C"), valueOf(1.0));
-		prices.put(new Pair("USDT_D"), valueOf(1.0));
-		prices.put(new Pair("USDT_E"), valueOf(1.0));
-		prices.put(new Pair("BTC_A"), valueOf(2.0));
-		prices.put(new Pair("BTC_B"), valueOf(2.0));
-		prices.put(new Pair("BTC_C"), valueOf(2.0));
-		prices.put(new Pair("BTC_D"), valueOf(2.0));
-		prices.put(new Pair("BTC_E"), valueOf(2.0));
+		Map<Pair, BigDecimal> pricesData = new HashMap<>();
+		pricesData.put(new Pair("USDT_A"), valueOf(1.0));
+		pricesData.put(new Pair("USDT_B"), valueOf(1.0));
+		pricesData.put(new Pair("USDT_C"), valueOf(1.0));
+		pricesData.put(new Pair("USDT_D"), valueOf(1.0));
+		pricesData.put(new Pair("USDT_E"), valueOf(1.0));
+		pricesData.put(new Pair("BTC_A"), valueOf(2.0));
+		pricesData.put(new Pair("BTC_B"), valueOf(2.0));
+		pricesData.put(new Pair("BTC_C"), valueOf(2.0));
+		pricesData.put(new Pair("BTC_D"), valueOf(2.0));
+		pricesData.put(new Pair("BTC_E"), valueOf(2.0));
 		
 		Map<Pair, BigDecimal> pairVolumes = new HashMap<>();
 		pairVolumes.put(new Pair("USDT_A"), valueOf(10.0));
@@ -63,7 +43,29 @@ public class TraderTest {
 		pairVolumes.put(new Pair("USDT_D"), valueOf(10.0));
 		pairVolumes.put(new Pair("USDT_E"), valueOf(10.0));
 		
-		new Trader(new Prices(prices, pairVolumes), wallet, log).generateOperations();
+		Prices prices = new Prices(pricesData, pairVolumes);
+		
+		Map<Currency, BigDecimal> balance = new HashMap<>();
+		balance.put(new Currency("A"), valueOf(100.0));
+		balance.put(new Currency("B"), valueOf(100.0));
+		balance.put(new Currency("C"), valueOf(100.0));
+		balance.put(new Currency("D"), valueOf(100.0));
+		balance.put(new Currency("E"), valueOf(100.0));
+		Wallet wallet = new Wallet(balance, FXCollections.observableSet(), prices);
+		
+		System.out.println(wallet.getPercentChanges());
+		
+		try {
+			Method m = Wallet.class.getDeclaredMethod("setPercentChanges", double[].class);
+			m.setAccessible(true);
+			m.invoke(wallet, new double[] {17, -6, 14.99, -6, -19.99} );
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		
+		System.out.println(wallet.getPercentChanges());
+		
+		new Trader(prices, wallet, log, "/dev/null").generateOperations();
 //		expected output:
 //		
 //		A --> B: -6,00%

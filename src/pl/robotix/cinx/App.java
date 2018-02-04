@@ -35,6 +35,7 @@ import pl.robotix.cinx.wallet.WalletUI;
 public class App extends Application {
 	
 	private static final String CONFIG_FILE = "./app.properties";
+	private static final String LOG_FILE = "./operation.log";
 
 	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
 	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
@@ -61,8 +62,8 @@ public class App extends Application {
 		api = new AsyncThrottledCachedApi(new Api(poloniexApiKey, poloniexSecret), 2000, 2);
 		prices = api.retrievePrices();
 		pricesHistory = new PricesHistory(api, chartCurrencies);
-		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies);
-		trader = new Trader(prices, wallet, log);
+		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies, prices);
+		trader = new Trader(prices, wallet, log, LOG_FILE);
 
 		layout(primaryStage);
 
@@ -70,7 +71,13 @@ public class App extends Application {
 		Config config = new Config(CONFIG_FILE);
 		chartCurrencies.addAll(config.getSubscribedCurrencies());
 
-		chartCurrencies.addAll(random(2));
+		chartCurrencies.addAll(random(config.getRandomCurrenciesCount()));
+	}
+	
+	@Override
+	public void stop() throws Exception {
+		api.close();
+		trader.close();
 	}
 	
 	private Set<Currency> random(int count) {
@@ -137,7 +144,7 @@ public class App extends Application {
 	
 	
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
-		Map<Currency, BigDecimal> balance = api.retrieveUSDBalance();
+		Map<Currency, BigDecimal> balance = api.retrieveBalance();
 		if (!balance.containsKey(USDT)) {
 			balance.put(USDT, BigDecimal.valueOf(0.0));
 		}
