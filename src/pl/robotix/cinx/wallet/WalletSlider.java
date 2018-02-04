@@ -1,5 +1,7 @@
 package pl.robotix.cinx.wallet;
 
+import java.util.function.Consumer;
+
 import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
@@ -21,7 +23,7 @@ public class WalletSlider extends VBox {
 	private final CheckBox freeze = new CheckBox();
 	
 
-	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlihtCurrency) {
+	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlihtCurrency, Consumer<WalletSlider> onFreezeWithCTRL) {
 		super();
 		currency = s.getCurrency();
 		
@@ -41,6 +43,11 @@ public class WalletSlider extends VBox {
 						.otherwise(Color.GREY)));
 		
 		s.freeze.bind(freeze.selectedProperty());
+		freeze.setOnMouseClicked((event) -> {
+			if (event.isControlDown()) {
+				onFreezeWithCTRL.accept(this);
+			}
+		});
 		
 		s.enabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
 			boolean enabled = newValue;
@@ -56,6 +63,14 @@ public class WalletSlider extends VBox {
 		setOnMouseEntered((event) -> {
 			highlihtCurrency.set(currency);
 		});
+	}
+	
+	public void freeze(boolean freeze) {
+		this.freeze.setSelected(freeze);
+	}
+	
+	public boolean isFreeze() {
+		return this.freeze.isSelected();
 	}
 
 	@Override
