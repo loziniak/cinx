@@ -89,10 +89,10 @@ public class App extends Application {
 		currencyList.sort(prices.byVolume());
 		
 		Set<Currency> random = new HashSet<>();
-		do {
+		while (random.size() < count) {
 			random.add(currencyList.get(
 					new Double(Math.random() * currencyList.size() * fromFirst).intValue()));
-		} while (random.size() < count);
+		}
 			
 		return random;
 	}
