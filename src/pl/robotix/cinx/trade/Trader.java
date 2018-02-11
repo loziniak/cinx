@@ -1,7 +1,7 @@
 package pl.robotix.cinx.trade;
 
 import static java.lang.Math.abs;
-import static java.util.Collections.reverseOrder;
+import static java.math.BigDecimal.ZERO;
 import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.Pair.USDT_BTC;
@@ -13,12 +13,10 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
@@ -257,7 +255,7 @@ public class Trader {
 	
 	private List<Currency> altcoinClearingsFirst(final Map<Currency, Double> changes) {
 		List<Currency> clearings = new LinkedList<>();
-		List<Currency> rest = new LinkedList<>();
+		List<Currency> rest = new ArrayList<>();
 		
 		changes.forEach((currency, change) -> {
 			if (isAltcoinClearing(currency, change)) {
@@ -267,13 +265,16 @@ public class Trader {
 			}
 		});
 		
+		rest.sort((c1, c2) -> changes.get(c2).compareTo(changes.get(c1)));
+		
 		clearings.addAll(rest);
 		return clearings;
 	}
 	
 	private boolean isAltcoinClearing(Currency c, double change) {
 		return !c.equals(BTC) && !c.equals(USDT)
-				&& abs(wallet.getOriginalPercent(c) + change) < 0.01;
+				&& abs(wallet.getOriginalPercent(c) + change) < 0.01
+				&& wallet.getOriginalAmount(c).compareTo(ZERO) > 0;
 	}
 	
 	private void correctDrift(Map<Currency, Double> changes) {

@@ -1,5 +1,7 @@
 package pl.robotix.cinx.wallet;
 
+import static java.math.BigDecimal.ZERO;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -131,11 +133,13 @@ public class Wallet {
 	}
 	
 	public BigDecimal getOriginalAmount(Currency c) {
-		return sliders.get(c).getOriginalAmount();
+		WalletEntry slider = sliders.get(c);
+		return slider != null ? slider.getOriginalAmount() : ZERO;
 	}
 	
 	public double getOriginalPercent(Currency c) {
-		return sliders.get(c).getOriginalPercent();
+		WalletEntry slider = sliders.get(c);
+		return slider != null ? slider.getOriginalPercent() : 0.0;
 	}
 	
 	@SuppressWarnings("unused") // used in tests with reflection
