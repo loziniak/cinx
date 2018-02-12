@@ -45,20 +45,13 @@ public class Trader {
 	
 	private List<Operation> operations = new ArrayList<>();
 	
-	public Trader(Prices prices, Wallet wallet, Logger log, String operationLogFile) {
+	public Trader(Prices prices, Wallet wallet, Logger log, OperationLog operationLog) {
 		this.prices = prices;
 		this.wallet = wallet;
 		this.log = log;
-		try {
-			this.operationLog = new OperationLog(operationLogFile);
-		} catch (IOException e) {
-			System.err.println("Could not open operation log: "+e.getMessage());
-		}
+		this.operationLog = operationLog;
 	}
 	
-	public void close() {
-		operationLog.close();
-	}
 	
 	public List<Operation> generateOperations() {
 		operations.clear();

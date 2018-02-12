@@ -49,7 +49,7 @@ public class WalletSlider extends VBox {
 			}
 		});
 		
-		s.enabled.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+		s.enabled.addListener((observable, oldValue, newValue) -> {
 			boolean enabled = newValue;
 			if (enabled) {
 				slider.enable();

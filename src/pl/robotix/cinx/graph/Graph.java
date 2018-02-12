@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.LineChart;
@@ -15,19 +14,26 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart.Data;
 import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.ObservableArrayList;
 import pl.robotix.cinx.Point;
 import pl.robotix.cinx.TimeRange;
+import pl.robotix.cinx.log.OperationLog;
+import pl.robotix.cinx.log.OperationsUI;
 
 public class Graph extends VBox {
 	
 	private ObservableArrayList<Series<LocalDateTime,Number>> series = new ObservableArrayList<>();
 	private TimeAxis dates;
 	
-	public Graph(final PricesHistory pricesHistory, ObjectProperty<Currency> highlihtCurrency) {
+	OperationsUI history;
+	
+	public Graph(final PricesHistory pricesHistory, ObjectProperty<Currency> highlihtCurrency, OperationLog operationLog) {
 		super();
+		setFillWidth(true);
 
 		ChoiceBox<TimeRange> timeRanges = new ChoiceBox<>(observableArrayList(TimeRange.values()));
 		timeRanges.getSelectionModel().select(pricesHistory.timeRange.get());
@@ -42,7 +48,17 @@ public class Graph extends VBox {
 		LineChart<LocalDateTime, Number> chart = new LineChart<>(dates, percents);
 		chart.setCreateSymbols(false);
 		chart.setData(series);
-		getChildren().add(chart);
+		
+		
+		StackPane chartWithHistory = new StackPane();
+		setVgrow(chartWithHistory, Priority.ALWAYS);
+		chartWithHistory.getChildren().add(chart);
+
+		history = new OperationsUI(chart, operationLog);
+		chartWithHistory.getChildren().add(history);
+		history.getRangeProperty().bind(pricesHistory.timeRange);
+
+		getChildren().add(chartWithHistory);
 		
 		pricesHistory.displayedCurrencies.addListener((MapChangeListener.Change<? extends Currency, ? extends List<Point>> change) -> {
 			if (change.wasAdded()) {
@@ -52,11 +68,12 @@ public class Graph extends VBox {
 			}
 		});
 		
-		highlihtCurrency.addListener((ObservableValue<? extends Currency> observable, Currency oldValue, Currency newValue) -> {
+		highlihtCurrency.addListener((observable, oldValue, newValue) -> {
 			if ((newValue == null && oldValue != null)
 					|| newValue != null && !newValue.equals(oldValue)) {
 				Series<LocalDateTime, Number> removed = remove(newValue);
 				display(removed.getData(), newValue);
+				history.drawHistoryFor(removed.getData(), newValue);
 			}
 		});
 	}

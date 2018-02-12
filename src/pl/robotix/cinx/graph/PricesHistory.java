@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -30,7 +29,7 @@ import pl.robotix.cinx.api.AsyncThrottledCachedApi;
 
 public class PricesHistory {
 	
-	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.DAY);
+	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.WEEK);
 	
 	final ObservableMap<Currency, List<Point>> displayedCurrencies = FXCollections.observableHashMap();
 	
@@ -51,7 +50,7 @@ public class PricesHistory {
 			}
 		});
 		
-		timeRange.addListener((ObservableValue<? extends TimeRange> observable, TimeRange oldValue, TimeRange newValue) -> {
+		timeRange.addListener((observable, oldValue, newValue) -> {
 			if (oldValue != newValue) {
 				Set<Currency> currencies = new HashSet<>(displayedCurrencies.keySet());
 				currencies.forEach((currency) -> {
@@ -126,12 +125,15 @@ public class PricesHistory {
 		long start = range.getStart();
 		for (int i=0; i < range.getPointsCount(); i++) {
 			usdPriceHistory.add(new Point(
-				LocalDateTime.ofEpochSecond(start + i * range.densitySeconds, 0, ZoneOffset.UTC),
+				fromEpochSeconds(start + i * range.densitySeconds),
 				1.0)
 			);
 		}
 		return usdPriceHistory;
 	}
 	
+	public static LocalDateTime fromEpochSeconds(long epochSeconds) {
+		return LocalDateTime.ofEpochSecond(epochSeconds, 0, ZoneOffset.UTC);
+	}
 	
 }

@@ -32,8 +32,7 @@ public class WalletEntry {
 
 		percentChange = percent.subtract(originalPercent);
 
-		percent.addListener(
-				(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
+		percent.addListener((observable, oldValue, newValue) -> {
 			if (newValue.doubleValue() == 100.0) {
 				enabled.set(false);
 			}

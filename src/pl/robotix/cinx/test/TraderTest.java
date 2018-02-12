@@ -2,6 +2,7 @@ package pl.robotix.cinx.test;
 
 import static java.math.BigDecimal.valueOf;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -14,13 +15,14 @@ import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Prices;
+import pl.robotix.cinx.log.OperationLog;
 import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
 
 public class TraderTest {
 
 	@Test
-	public void findsPriceChain() throws InterruptedException {
+	public void findsPriceChain() throws InterruptedException, IOException {
 		
 		Logger log = new Logger((message) -> System.out.println(message));
 		
@@ -65,7 +67,7 @@ public class TraderTest {
 		
 		System.out.println(wallet.getPercentChanges());
 		
-		new Trader(prices, wallet, log, "/dev/null").generateOperations();
+		new Trader(prices, wallet, log, new OperationLog("/dev/null")).generateOperations();
 //		expected output:
 //		
 //		A --> B: -6,00%

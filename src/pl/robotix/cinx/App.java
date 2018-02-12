@@ -27,6 +27,7 @@ import pl.robotix.cinx.api.Api;
 import pl.robotix.cinx.api.AsyncThrottledCachedApi;
 import pl.robotix.cinx.graph.Graph;
 import pl.robotix.cinx.graph.PricesHistory;
+import pl.robotix.cinx.log.OperationLog;
 import pl.robotix.cinx.trade.TradeUI;
 import pl.robotix.cinx.trade.Trader;
 import pl.robotix.cinx.wallet.Wallet;
@@ -46,6 +47,7 @@ public class App extends Application {
 	private PricesHistory pricesHistory;
 	private Wallet wallet;
 	private Trader trader;
+	private OperationLog operationLog;
 
 	private ObservableSet<Currency> chartCurrencies = FXCollections.observableSet();
 	private ObjectProperty<Currency> highlihtCurrency = new SimpleObjectProperty<>();
@@ -58,12 +60,14 @@ public class App extends Application {
 		
 		String poloniexApiKey = System.getenv(POLONIEX_APIKEY_ENV);
 		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
+		
+		operationLog = new OperationLog(LOG_FILE);
 
 		api = new AsyncThrottledCachedApi(new Api(poloniexApiKey, poloniexSecret), 2000, 2);
 		prices = api.retrievePrices();
 		pricesHistory = new PricesHistory(api, chartCurrencies);
 		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies, prices);
-		trader = new Trader(prices, wallet, log, LOG_FILE);
+		trader = new Trader(prices, wallet, log, operationLog);
 
 		layout(primaryStage);
 
@@ -77,7 +81,7 @@ public class App extends Application {
 	@Override
 	public void stop() throws Exception {
 		api.close();
-		trader.close();
+		operationLog.close();
 	}
 	
 	private Set<Currency> random(int count) {
@@ -116,7 +120,7 @@ public class App extends Application {
 
 	private VBox analyzeLayout(Tab trade) {
 		HBox top = new HBox();
-		top.getChildren().add(new Graph(pricesHistory, highlihtCurrency));
+		top.getChildren().add(new Graph(pricesHistory, highlihtCurrency, operationLog));
 		
 		WalletUI walletUI = new WalletUI(wallet, highlihtCurrency);
 		walletUI.setPadding(new Insets(20));
