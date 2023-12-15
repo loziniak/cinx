@@ -1,60 +1,65 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>pl.robotix</groupId>
-    <artifactId>cinx</artifactId>
-    <packaging>jar</packaging>
+	<groupId>pl.robotix</groupId>
+	<artifactId>cinx</artifactId>
+	<packaging>jar</packaging>
 
-    <name>Cinx</name>
-    <version>0.0.1-SNAPSHOT</version>
-    <organization>
-        <name>Robotix</name>
-    </organization>
+	<name>Cinx</name>
+	<version>0.0.1-SNAPSHOT</version>
+	<organization>
+		<name>Robotix</name>
+	</organization>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.cf</groupId>
-            <artifactId>PoloniexClient</artifactId>
-            <version>1.1.1-SNAPSHOT</version>
-        </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>com.cf</groupId>
+			<artifactId>PoloniexClient</artifactId>
+			<version>1.1.1-SNAPSHOT</version>
+		</dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
-            <!-- <scope>test</scope> -->
-            <type>jar</type>
-        </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.1</version>
+			<!-- <scope>test</scope> -->
+			<type>jar</type>
+		</dependency>
 
-    <build>
-        <sourceDirectory>src</sourceDirectory>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source />
-                    <target />
-                </configuration>
-            </plugin>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>17.0.9</version>
+		</dependency>
+	</dependencies>
 
-            <plugin>
-                <groupId>com.zenjava</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>8.8.3</version>
-                <configuration>
-                    <vendor>${project.organization.name}</vendor>
-                    <mainClass>pl.robotix.cinx.App</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
+				<configuration>
+					<source />
+					<target />
+				</configuration>
+			</plugin>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
+			<plugin>
+				<groupId>org.openjfx</groupId>
+				<artifactId>javafx-maven-plugin</artifactId>
+				<version>0.0.8</version>
+				<configuration>
+					<mainClass>pl.robotix.cinx.AppStarter</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.release>17</maven.compiler.release>
+	</properties>
 </project>

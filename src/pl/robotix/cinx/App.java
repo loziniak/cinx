@@ -95,7 +95,7 @@ public class App extends Application {
 		Set<Currency> random = new HashSet<>();
 		while (random.size() < count) {
 			random.add(currencyList.get(
-					new Double(Math.random() * currencyList.size() * fromFirst).intValue()));
+					Double.valueOf(Math.random() * currencyList.size() * fromFirst).intValue()));
 		}
 			
 		return random;
