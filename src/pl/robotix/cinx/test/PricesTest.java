@@ -14,15 +14,16 @@ import pl.robotix.cinx.Prices;
 
 public class PricesTest {
 	
-	public static final Pair USDT_ETH = new Pair("USDT_ETH");
-	public static final Pair ETH_LTC = new Pair("ETH_LTC");
-	public static final Pair USDT_BTC = new Pair("USDT_BTC");
-	public static final Pair BTC_LTC = new Pair("BTC_LTC");
-
 	public static final Currency LTC = new Currency("LTC");
 	public static final Currency USDT = new Currency("USDT");
 	public static final Currency BTC = new Currency("BTC");
+	public static final Currency ETH = new Currency("ETH");
 	
+	public static final Pair USDT_ETH = new Pair(USDT, ETH);
+	public static final Pair ETH_LTC = new Pair(ETH, LTC);
+	public static final Pair USDT_BTC = new Pair(USDT, BTC);
+	public static final Pair BTC_LTC = new Pair(BTC, LTC);
+
 	@Test
 	public void findsPriceChain() {
 		

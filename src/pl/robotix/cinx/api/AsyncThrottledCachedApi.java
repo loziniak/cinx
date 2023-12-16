@@ -2,6 +2,7 @@ package pl.robotix.cinx.api;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -20,7 +21,7 @@ import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
 
-public class AsyncThrottledCachedApi {
+public class AsyncThrottledCachedApi implements AsyncApi {
 	
 	private static final long POLONIEX_MIN_OPERATION_DELAY_MS = 400;
 	private static final long THROTTLE_QUEUES_COUNT = 2; // sync and async
@@ -31,7 +32,7 @@ public class AsyncThrottledCachedApi {
 	
 	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(5);
 
-	private Api api;
+	private SyncApi api;
 	private long timeoutMs;
 	private int maxRetries;
 
@@ -39,7 +40,7 @@ public class AsyncThrottledCachedApi {
 	private AtomicLong lastOpMillis;
 	private AtomicLong lastOpScheduledMillis;
 
-	public AsyncThrottledCachedApi(Api api, long timeoutMs, int maxRetries) {
+	public AsyncThrottledCachedApi(SyncApi api, long timeoutMs, int maxRetries) {
 		this.api = api;
 		this.timeoutMs = timeoutMs;
 		this.maxRetries = maxRetries;
@@ -47,6 +48,7 @@ public class AsyncThrottledCachedApi {
 		lastOpScheduledMillis = new AtomicLong(System.currentTimeMillis());
 	}
 	
+	@Override
 	public void close() {
 		executor.shutdown();
 		try {
@@ -55,28 +57,59 @@ public class AsyncThrottledCachedApi {
 		}
 	}
 
+	@Override
 	public Map<Currency, BigDecimal> retrieveBalance() {
 		syncThrottleControl();
 		return api.retrieveBalance();
 	}
 	
+	@Override
 	public Prices retrievePrices() {
 		syncThrottleControl();
 		return api.retrievePrices();
 	}
 	
+	@Override
+	public Prices retrievePrices(Collection<Pair> pairs) {
+		syncThrottleControl();
+		return api.retrievePrices(pairs);
+	}
+	
+	@Override
 	public void buy(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<Boolean> callback) {
 		asyncRunRecursive(() -> api.buy(pair, rate, amount), callback, 0, false);
 	}
 	
+	@Override
 	public void sell(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<Boolean> callback) {
 		asyncRunRecursive(() -> api.sell(pair, rate, amount), callback, 0, false);
 	}
 
+	@Override
 	public void retrievePriceHistory(Pair pair, TimeRange range, final Consumer<List<Point>> callback) {
 		asyncCache(() -> api.retrievePriceHistory(pair, range), 
 				"retrievePriceHistory_" + pair + "_" + range,
 				callback, true);
+	}
+	
+	@Override
+	public Collection<Currency> pairsForMarket(Currency c) {
+		return api.pairsForMarket(c);
+	}
+	
+	@Override
+	public Pair pair(String pairString) {
+		return api.pair(pairString);
+	}
+	
+	@Override
+	public String pairString(Pair pair) {
+		return api.pairString(pair);
+	}
+	
+	@Override
+	public boolean isExchangeable(Currency c) {
+		return api.isExchangeable(c);
 	}
 	
 	

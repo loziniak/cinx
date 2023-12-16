@@ -26,24 +26,24 @@ public class TraderTest {
 		
 		Logger log = new Logger((message) -> System.out.println(message));
 		
-		Map<Pair, BigDecimal> pricesData = new HashMap<>();
-		pricesData.put(new Pair("USDT_A"), valueOf(1.0));
-		pricesData.put(new Pair("USDT_B"), valueOf(1.0));
-		pricesData.put(new Pair("USDT_C"), valueOf(1.0));
-		pricesData.put(new Pair("USDT_D"), valueOf(1.0));
-		pricesData.put(new Pair("USDT_E"), valueOf(1.0));
-		pricesData.put(new Pair("BTC_A"), valueOf(2.0));
-		pricesData.put(new Pair("BTC_B"), valueOf(2.0));
-		pricesData.put(new Pair("BTC_C"), valueOf(2.0));
-		pricesData.put(new Pair("BTC_D"), valueOf(2.0));
-		pricesData.put(new Pair("BTC_E"), valueOf(2.0));
-		
 		Map<Pair, BigDecimal> pairVolumes = new HashMap<>();
-		pairVolumes.put(new Pair("USDT_A"), valueOf(10.0));
-		pairVolumes.put(new Pair("USDT_B"), valueOf(10.0));
-		pairVolumes.put(new Pair("USDT_C"), valueOf(10.0));
-		pairVolumes.put(new Pair("USDT_D"), valueOf(10.0));
-		pairVolumes.put(new Pair("USDT_E"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT", "A"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT", "B"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT", "C"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT", "D"), valueOf(10.0));
+		pairVolumes.put(new Pair("USDT", "E"), valueOf(10.0));
+		
+		Map<Pair, BigDecimal> pricesData = new HashMap<>();
+		pricesData.put(new Pair("USDT", "A"), valueOf(1.0));
+		pricesData.put(new Pair("USDT", "B"), valueOf(1.0));
+		pricesData.put(new Pair("USDT", "C"), valueOf(1.0));
+		pricesData.put(new Pair("USDT", "D"), valueOf(1.0));
+		pricesData.put(new Pair("USDT", "E"), valueOf(1.0));
+		pricesData.put(new Pair("BTC", "A"), valueOf(2.0));
+		pricesData.put(new Pair("BTC", "B"), valueOf(2.0));
+		pricesData.put(new Pair("BTC", "C"), valueOf(2.0));
+		pricesData.put(new Pair("BTC", "D"), valueOf(2.0));
+		pricesData.put(new Pair("BTC", "E"), valueOf(2.0));
 		
 		Prices prices = new Prices(pricesData, pairVolumes);
 		

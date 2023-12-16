@@ -8,7 +8,6 @@ import static pl.robotix.cinx.Pair.USDT_BTC;
 import static pl.robotix.cinx.trade.Operation.Type.BUY;
 import static pl.robotix.cinx.trade.Operation.Type.SELL;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Prices;
-import pl.robotix.cinx.api.AsyncThrottledCachedApi;
+import pl.robotix.cinx.api.AsyncApi;
 import pl.robotix.cinx.log.OperationLog;
 import pl.robotix.cinx.wallet.Wallet;
 
@@ -35,7 +34,7 @@ public class Trader {
 	private static final BigDecimal SELL_RATE_MOD = BigDecimal.valueOf(9, 1); // 0.9
 	private static final BigDecimal TRANSITION_RATE_MOD = BigDecimal.valueOf(99, 2); // 0.99
 	
-	private static final double TAKER_FEE = 0.0025;
+	private static final double TAKER_FEE = 0.0025; // TODO: move TAKER_FEE to Api.takerFee()
 	
 	private Prices prices;
 	private final Wallet wallet;
@@ -134,7 +133,7 @@ public class Trader {
 		return operations;
 	}
 	
-	public void executeOperations(AsyncThrottledCachedApi api) {
+	public void executeOperations(AsyncApi api) {
 		for (Entry<Currency, Double> entry: wallet.getPercentChanges().entrySet()) {
 			double percent = entry.getValue();
 			operationLog.log(entry.getKey(), percent, percentToUsd(percent),

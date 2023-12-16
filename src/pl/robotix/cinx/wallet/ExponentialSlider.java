@@ -23,7 +23,7 @@ public class ExponentialSlider {
 	
 	private final StringConverter<Double> singleDigit = new StringConverter<Double>() {
 		@Override public String toString(Double value) { return String.format("%.1f", func.apply(value)); }
-		@Override public Double fromString(String label) { return reverseFunc.apply(new Double(label)); }
+		@Override public Double fromString(String label) { return reverseFunc.apply(Double.valueOf(label)); }
 	};
 	
 	private Slider slider = new Slider(0, 1, 0);

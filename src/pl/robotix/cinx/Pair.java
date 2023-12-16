@@ -17,18 +17,15 @@ public class Pair {
 	 */
 	public final Currency base;
 	
-	/**
-	 * @param symbol e.g. USDT_BCH
-	 */
-	public Pair(String symbol) {
-		String[] currencySymbols = symbol.split("_");
-		quote = new Currency(currencySymbols[0]);
-		base = new Currency(currencySymbols[1]);
-	}
 	
 	public Pair(Currency quote, Currency base) {
 		this.quote = quote;
 		this.base = base;
+	}
+
+	public Pair(String quote, String base) {
+		this.quote = new Currency(quote);
+		this.base = new Currency(base);
 	}
 
 	public Pair reverse() {

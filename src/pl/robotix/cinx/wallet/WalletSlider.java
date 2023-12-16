@@ -4,7 +4,6 @@ import java.util.function.Consumer;
 
 import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;

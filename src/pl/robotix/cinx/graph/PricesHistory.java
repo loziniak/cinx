@@ -25,7 +25,7 @@ import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Point;
 import pl.robotix.cinx.TimeRange;
-import pl.robotix.cinx.api.AsyncThrottledCachedApi;
+import pl.robotix.cinx.api.AsyncApi;
 
 public class PricesHistory {
 	
@@ -33,10 +33,10 @@ public class PricesHistory {
 	
 	final ObservableMap<Currency, List<Point>> displayedCurrencies = FXCollections.observableHashMap();
 	
-	private AsyncThrottledCachedApi api;
+	private AsyncApi api;
 	
 
-	public PricesHistory(AsyncThrottledCachedApi api, ObservableSet<Currency> chartCurrencies) {
+	public PricesHistory(AsyncApi api, ObservableSet<Currency> chartCurrencies) {
 		this.api = api;
 
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {

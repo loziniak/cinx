@@ -29,19 +29,11 @@ public class Wallet {
 
 	public Wallet(Map<Currency, BigDecimal> balance, ObservableSet<Currency> chartCurrencies, Prices prices) {
 		this.prices = prices;
-		
+
 		sliders = FXCollections.observableMap(new HashMap<>());
-
-		double[] walletUSDHolder = { 0.0 };
-		balance.forEach((currency, amount) -> {
-			walletUSDHolder[0] += amount.doubleValue() * prices.getUSDFor(currency).doubleValue();
-		});
-		this.walletUSD = walletUSDHolder[0];
-
-		balance.forEach((currency, amount) -> {
-			add(currency, amount);
-		});
 		
+		walletUSD = setBalance(balance);
+
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {
 			if (change.wasAdded()) {
 				add(change.getElementAdded());
@@ -49,10 +41,28 @@ public class Wallet {
 			if (change.wasRemoved()) {
 				remove(change.getElementRemoved());
 			}
-		});		
+		});
+	}
+	
+	private double setBalance(Map<Currency, BigDecimal> balance) {
+		System.out.println("setBalance...");
+		prices.retrieveFor(balance.keySet());
+		
+		double[] walletUSDHolder = { 0.0 };
+		balance.forEach((currency, amount) -> {
+			System.out.println("setBalance: " + currency.symbol + " " + amount.toString());
+			walletUSDHolder[0] += amount.doubleValue() * prices.getUSDFor(currency).doubleValue();
+		});
+
+		balance.forEach((currency, amount) -> {
+			add(currency, amount, walletUSDHolder[0]);
+		});
+		
+		return walletUSDHolder[0];
 	}
 
-	private void add(Currency c, BigDecimal originalAmount) {
+	private void add(Currency c, BigDecimal originalAmount, double walletUSD) {
+		System.out.println("add1: " + c);
 		WalletEntry slider = new WalletEntry(c,
 				100 * originalAmount.doubleValue() * prices.getUSDFor(c).doubleValue() / walletUSD,
 				originalAmount);
@@ -63,7 +73,8 @@ public class Wallet {
 	}
 	
 	public void add(Currency c) {
-		this.add(c, BigDecimal.ZERO);
+		System.out.println("add2...");
+		this.add(c, BigDecimal.ZERO, walletUSD);
 	}
 	
 	public boolean canRemove(Currency c) {
@@ -73,7 +84,9 @@ public class Wallet {
 	
 	public void remove(Currency c) {
 		WalletEntry removed = sliders.remove(c);
-		changePercentsProportionally(removed, 0.0, removed.getPercent(), true);
+		if (removed != null) {
+			changePercentsProportionally(removed, 0.0, removed.getPercent(), true);
+		}
 	}
 	
 	private void changePercentsProportionally(WalletEntry movingSlider,
