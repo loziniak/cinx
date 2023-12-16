@@ -33,6 +33,8 @@ public class BinanceApi implements SyncApi {
 	
 	private static final String USDT_BTC_SYMBOL = pairStringStatic(USDT_BTC);
 	
+	private static final Map<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<>();
+	
 	private SpotClient client;
 	
 	private ExchangeInfo exchange;
@@ -49,6 +51,20 @@ public class BinanceApi implements SyncApi {
 		exchange = new ExchangeInfo(client.createMarket().exchangeInfo(emptyParams()));
 		pairsForMarket = pairsForMarket(MARKET_QUOTE);
 		pairsForMarket.add(BTC);
+	}
+	
+	@Override
+	public void initTimeRanges() {
+		TimeRange.init(
+				TimeRngInterval._5m.seconds,
+				TimeRngInterval._30m.seconds,
+				TimeRngInterval._2h.seconds,
+				TimeRngInterval._1d.seconds);
+
+		TIME_INTERVALS.put(TimeRange.DAY, TimeRngInterval._5m);
+		TIME_INTERVALS.put(TimeRange.WEEK, TimeRngInterval._30m);
+		TIME_INTERVALS.put(TimeRange.MONTH, TimeRngInterval._2h);
+		TIME_INTERVALS.put(TimeRange.YEAR, TimeRngInterval._1d);
 	}
 
 	@Override
@@ -173,6 +189,23 @@ public class BinanceApi implements SyncApi {
 
 	private static String pairStringStatic(Pair pair) {
 		return pair.base.symbol + pair.quote.symbol;
+	}
+
+	private static enum TimeRngInterval {
+		_5m(5 * 60),
+		_30m(30 * 60),
+		_2h(2 * 60 * 60),
+		_1d(24 * 60 * 60);
+		
+		private final long seconds;
+		
+		private TimeRngInterval(long seconds) {
+			this.seconds = seconds;
+		}
+		
+		public String val() {
+			return this.name().substring(1);
+		}
 	}
 
 }

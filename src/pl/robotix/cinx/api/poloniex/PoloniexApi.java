@@ -34,6 +34,15 @@ public class PoloniexApi implements SyncApi {
 	
 	
 	@Override
+	public void initTimeRanges() {
+		TimeRange.init(
+				5 * 60, // DAY -> 5 minutes
+				30 * 60, // WEEK -> 30 min
+				4 * 60 * 60, // MONTH -> 4h
+				24 * 60 * 60); // YEAR -> 1d
+	}
+
+	@Override
 	public Map<Currency, BigDecimal> retrieveBalance() {
 		Map<Currency, BigDecimal> realBalance = new HashMap<>();
 		Map<String, PoloniexCompleteBalance> balanceData = service.returnBalance(false);

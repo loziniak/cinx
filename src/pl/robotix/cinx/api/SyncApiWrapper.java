@@ -19,6 +19,11 @@ public class SyncApiWrapper implements AsyncApi {
 	public SyncApiWrapper(SyncApi api) {
 		this.api = api;
 	}
+	
+	@Override
+	public void initTimeRanges() {
+		api.initTimeRanges();
+	}
 
 	@Override
 	public void close() {}

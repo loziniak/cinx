@@ -49,6 +49,11 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 	}
 	
 	@Override
+	public void initTimeRanges() {
+		api.initTimeRanges();
+	}
+	
+	@Override
 	public void close() {
 		executor.shutdown();
 		try {

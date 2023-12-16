@@ -9,6 +9,8 @@ import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Prices;
 
 public interface Api {
+	
+	void initTimeRanges();
 
 	Map<Currency, BigDecimal> retrieveBalance();
 
