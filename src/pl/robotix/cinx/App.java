@@ -70,6 +70,7 @@ public class App extends Application {
 
 //		api = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2);
 		api = new SyncApiWrapper(new BinanceApi(binanceApiKey, binanceSecret));
+		api.initTimeRanges();
 		pricesHistory = new PricesHistory(api, chartCurrencies);
 
 		prices = new Prices(api);
@@ -87,7 +88,7 @@ public class App extends Application {
 
 		chartCurrencies.addAll(random(config.getRandomCurrenciesCount())); // retrieve api btc
 		
-		prices.retrieveFor(chartCurrencies); // retriev chart (wallet,
+		prices.retrieveFor(chartCurrencies); // retrieve chart (wallet, subscribed, random)
 	}
 	
 	@Override
@@ -105,13 +106,15 @@ public class App extends Application {
 		Set<Currency> currencySet = prices.getAllCurrencies();
 		currencySet.removeAll(chartCurrencies);
 		List<Currency> currencyList = new ArrayList<>(currencySet);
-		currencyList.sort(prices.byVolume());
 		
 		Set<Currency> random = new HashSet<>();
-		while (random.size() < count) {
-			random.add(currencyList.get(
-					Double.valueOf(Math.random() * currencyList.size() * fromFirst).intValue()
-				));
+		if (currencyList.size() > count) {
+			currencyList.sort(prices.byVolume());
+			while (random.size() < count) {
+				random.add(currencyList.get(
+						Double.valueOf(Math.random() * currencyList.size() * fromFirst).intValue()
+					));
+			}
 		}
 		return random;
 	}

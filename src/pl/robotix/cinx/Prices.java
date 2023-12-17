@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +31,7 @@ public class Prices {
 	
 	public Prices(AsyncApi api) {
 		this.api = api;
+		retrieveFor(api.pairsForMarket(BTC));
 	}
 
 	public Prices(Map<Pair, BigDecimal> prices, Map<Pair, BigDecimal> pairVolumes) {

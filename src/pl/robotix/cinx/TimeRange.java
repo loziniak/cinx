@@ -12,10 +12,10 @@ public class TimeRange {
 	public static TimeRange YEAR;
 	
 	public static void init(long dayDensity, long weekDensity, long monthDensity, long yearDensity) {
-		DAY = new TimeRange(24 * 60 * 60, dayDensity);
-		WEEK = new TimeRange(7 * DAY.periodSeconds, weekDensity);
-		MONTH = new TimeRange(30 * DAY.periodSeconds, monthDensity);
-		YEAR = new TimeRange(365 * DAY.periodSeconds, yearDensity);
+		DAY = new TimeRange("DAY", 24 * 60 * 60, dayDensity);
+		WEEK = new TimeRange("WEEK", 7 * DAY.periodSeconds, weekDensity);
+		MONTH = new TimeRange("MONTH", 30 * DAY.periodSeconds, monthDensity);
+		YEAR = new TimeRange("YEAR", 365 * DAY.periodSeconds, yearDensity);
 	}
 	
 	public static List<TimeRange> values() {
@@ -23,12 +23,15 @@ public class TimeRange {
 	}
 
 	
+	private final String name;
+	
 	public final long periodSeconds;
 	
 	public final long densitySeconds;
 	
 	
-	private TimeRange(long periodSeconds, long densitySeconds) {
+	private TimeRange(String name, long periodSeconds, long densitySeconds) {
+		this.name = name;
 		this.periodSeconds = periodSeconds;
 		this.densitySeconds = densitySeconds;
 	}
@@ -39,6 +42,11 @@ public class TimeRange {
 	
 	public long getPointsCount() {
 		return periodSeconds / densitySeconds;
+	}
+	
+	@Override
+	public String toString() {
+		return name;
 	}
 
 }

@@ -1,5 +1,6 @@
 package pl.robotix.cinx.api.binance;
 
+import static java.util.stream.Collectors.toList;
 import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.Pair.USDT_BTC;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.json.JSONArray;
@@ -33,7 +35,7 @@ public class BinanceApi implements SyncApi {
 	
 	private static final String USDT_BTC_SYMBOL = pairStringStatic(USDT_BTC);
 	
-	private static final Map<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<>();
+	private static final HashMap<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<TimeRange, TimeRngInterval>();
 	
 	private SpotClient client;
 	
@@ -73,7 +75,8 @@ public class BinanceApi implements SyncApi {
 		var account = new Account(json);
 
 		var balance = new HashMap<Currency, BigDecimal>();
-		account.getBalances().forEach((bal) -> {
+		account.getBalances().stream()
+				.forEach((bal) -> {
 			var cur = new Currency(bal.getAsset());
 			if (isExchangeable(cur)) {
 				System.out.println("retrieveBalance: " + cur.symbol);
@@ -98,8 +101,28 @@ public class BinanceApi implements SyncApi {
 
 	@Override
 	public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
-		// TODO Auto-generated method stub
-		return null;
+		Function<Kline, Point> pointCreator;
+		if (pair.isReverse()) {
+			pointCreator = (kline) -> new Point(kline.getCloseTime(),
+					1.0 / kline.getClosePrice().doubleValue());
+			pair = pair.reverse();
+		} else {
+			pointCreator = (kline) -> new Point(kline.getCloseTime(),
+					kline.getClosePrice().doubleValue());
+		}
+		
+		var params = emptyParams();
+		params.put("symbol", pairString(pair));
+		params.put("interval", TIME_INTERVALS.get(range).paramVal());
+		params.put("limit", range.getPointsCount());
+		var json = client.createMarket().klines(params);
+		var points = new JSONArray(json).toList().stream()
+				.map((obj) -> {
+					return pointCreator.apply(new Kline(obj));
+				})
+				.collect(toList());
+
+		return points;
 	}
 
 	@Override
@@ -152,6 +175,9 @@ public class BinanceApi implements SyncApi {
 	
 	@Override
 	public Set<Currency> pairsForMarket(Currency c) {
+		if (c.equals(MARKET_QUOTE) && pairsForMarket != null) {
+			return pairsForMarket;
+		}
 		return exchange.getSymbols().stream()
 				.filter((s) -> s.toPair().quote.equals(c))
 				.map((s) -> s.toPair().base)
@@ -203,7 +229,7 @@ public class BinanceApi implements SyncApi {
 			this.seconds = seconds;
 		}
 		
-		public String val() {
+		public String paramVal() {
 			return this.name().substring(1);
 		}
 	}
