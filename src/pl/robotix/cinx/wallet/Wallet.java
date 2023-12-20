@@ -62,7 +62,6 @@ public class Wallet {
 	}
 
 	private void add(Currency c, BigDecimal originalAmount, double walletUSD) {
-		System.out.println("add1: " + c);
 		WalletEntry slider = new WalletEntry(c,
 				100 * originalAmount.doubleValue() * prices.getUSDFor(c).doubleValue() / walletUSD,
 				originalAmount);
@@ -73,7 +72,6 @@ public class Wallet {
 	}
 	
 	public void add(Currency c) {
-		System.out.println("add2...");
 		this.add(c, BigDecimal.ZERO, walletUSD);
 	}
 	
@@ -97,10 +95,10 @@ public class Wallet {
 		double[] movedPercentHolder = {0.0};
 		double[] freezedPercentHolder = {0.0};
 		sliders.forEach((currency, slider) -> {
-			if (slider.freeze.get()) {
-				freezedPercentHolder[0] += slider.getPercent();
-			} else {
-				if (!slider.equals(movingSlider)) {
+			if (!slider.equals(movingSlider)) {
+				if (slider.freeze.get()) {
+					freezedPercentHolder[0] += slider.getPercent();
+				} else {
 					slidersToMove.add(slider);
 					movedPercentHolder[0] += slider.getPercent();
 				}
@@ -119,9 +117,12 @@ public class Wallet {
 				});
 
 			} else {
-				double x = (100.0 - newPercent - freezedPercentHolder[0]) / movedPercentHolder[0];
+				double freezed = freezedPercentHolder[0];
+				double moved = movedPercentHolder[0];
+				double x = (100.0 - newPercent - freezed) / (moved == 0.0 ? slidersToMove.size() : moved);
+				double y = moved == 0.0 ? 1.0 : 0.0;
 				slidersToMove.forEach((otherSlider) -> {
-					otherSlider.setPercent(otherSlider.getPercent() * x);
+					otherSlider.setPercent((otherSlider.getPercent() + y) * x);
 					if (otherSlider.getPercent() != 100.0) {
 						otherSlider.enable();
 					}

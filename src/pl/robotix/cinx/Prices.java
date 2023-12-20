@@ -1,6 +1,7 @@
 package pl.robotix.cinx;
 
 import static java.math.BigDecimal.ONE;
+import static java.math.BigDecimal.ZERO;
 import static java.util.Collections.reverseOrder;
 import static java.util.Comparator.comparing;
 import static pl.robotix.cinx.Currency.BTC;
@@ -39,7 +40,8 @@ public class Prices {
 		prices.forEach((pair, price) -> {
 			try {
 				this.prices.put(pair, price);
-				this.prices.put(pair.reverse(), ONE.divide(price, MathContext.DECIMAL64));
+				this.prices.put(pair.reverse(),
+						price.doubleValue() == 0.0 ? ZERO : ONE.divide(price, MathContext.DECIMAL64));
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
@@ -57,7 +59,6 @@ public class Prices {
 	}
 	
 	public BigDecimal getRate(Pair pair) {
-		System.out.println("getRate: " + pair);
 		if (pair.base.equals(pair.quote)) {
 			return ONE;
 		}
@@ -138,7 +139,6 @@ public class Prices {
 	}
 	
 	private void addToVolumes(Pair pair, BigDecimal volume) {
-		System.out.println("addToVolumes...");
 		Currency base = pair.base;
 		Currency quote = pair.quote;
 		BigDecimal baseVolume = volume;

@@ -9,11 +9,13 @@ public class Ticker {
 	private String symbol;
 	private BigDecimal volume;
 	private BigDecimal lastPrice;
+	private long count;
 
 	public Ticker(JSONObject o) {
 		symbol = o.getString(Keys.symbol.name());
 		volume = new BigDecimal(o.getString(Keys.volume.name()));
 		lastPrice = new BigDecimal(o.getString(Keys.lastPrice.name()));
+		count = o.getLong(Keys.count.name());
 	}
 	
 	public String getSymbol() {
@@ -27,12 +29,17 @@ public class Ticker {
 	public BigDecimal getLastPrice() {
 		return lastPrice;
 	}
+	
+	public long getCount() {
+		return count;
+	}
 
 
 	private static enum Keys {
 		symbol,
 		volume,
-		lastPrice
+		lastPrice,
+		count
 	}
 	
 }

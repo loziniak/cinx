@@ -27,6 +27,8 @@ import pl.robotix.cinx.trade.Operation.Type;
 
 public class OperationsUI extends Canvas {
 	
+	private static final int BIAS_CALIBRATION_PX = 5;
+	
 	private ObjectProperty<TimeRange> range = new SimpleObjectProperty<>();
 	
 	private ObjectProperty<Bounds> drawBounds = new SimpleObjectProperty<Bounds>(new BoundingBox(0, 0, 0, 0));
@@ -55,7 +57,7 @@ public class OperationsUI extends Canvas {
 
 		plotArea.boundsInLocalProperty().addListener((property, oldVal, newVal) -> {
 			drawBounds.set(new BoundingBox(
-					newVal.getMinX() + 5,  newVal.getMinY() + 5, 
+					newVal.getMinX() + BIAS_CALIBRATION_PX,  newVal.getMinY() + BIAS_CALIBRATION_PX, 
 					newVal.getWidth(), newVal.getHeight()));
 		});
 		drawBounds.addListener((o, oldVal, newVal) -> {
@@ -96,7 +98,7 @@ public class OperationsUI extends Canvas {
 		
 //		drawCalibration(gc);
 		
-		gc.setLineWidth(2);
+		gc.setLineWidth(2.5);
 		gc.setStroke(Color.WHITE);
 		for (Circle c: circles) {
 			c.draw(gc);

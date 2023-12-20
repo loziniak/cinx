@@ -167,6 +167,9 @@ public class App extends Application {
 	
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
 		Map<Currency, BigDecimal> balance = api.retrieveBalance();
+		
+		balance.keySet().removeIf((k) -> prices.getUSDFor(k).multiply(balance.get(k)).compareTo(BigDecimal.ONE) < 0);
+
 		if (!balance.containsKey(USDT)) {
 			balance.put(USDT, BigDecimal.ZERO);
 		}

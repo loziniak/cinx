@@ -5,6 +5,8 @@ import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.Pair.USDT_BTC;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +23,7 @@ import org.json.JSONObject;
 import com.binance.connector.client.SpotClient;
 import com.binance.connector.client.enums.DefaultUrls;
 import com.binance.connector.client.impl.SpotClientImpl;
+import com.binance.connector.client.utils.signaturegenerator.Ed25519SignatureGenerator;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
@@ -76,9 +79,10 @@ public class BinanceApi implements SyncApi {
 
 		var balance = new HashMap<Currency, BigDecimal>();
 		account.getBalances().stream()
+//				.skip(5).limit(10) // TODO: just for testnet
 				.forEach((bal) -> {
 			var cur = new Currency(bal.getAsset());
-			if (isExchangeable(cur)) {
+			if (bal.getFree().signum() != 0 && isExchangeable(cur)) {
 				System.out.println("retrieveBalance: " + cur.symbol);
 				balance.put(cur, bal.getFree());
 			}

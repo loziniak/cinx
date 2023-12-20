@@ -46,6 +46,7 @@ public class Graph extends VBox {
 		NumberAxis percents = new NumberAxis(-100, 100, 25);
 		percents.setAutoRanging(true);
 		LineChart<LocalDateTime, Number> chart = new LineChart<>(dates, percents);
+		chart.setAnimated(false);
 		chart.setCreateSymbols(false);
 		chart.setData(series);
 		
@@ -63,6 +64,7 @@ public class Graph extends VBox {
 		pricesHistory.displayedCurrencies.addListener((MapChangeListener.Change<? extends Currency, ? extends List<Point>> change) -> {
 			if (change.wasAdded()) {
 				display(change.getValueAdded(), change.getKey());
+				highlihtCurrency.set(change.getKey());
 			} else if (change.wasRemoved()) {
 				remove(change.getKey());
 			}
@@ -71,9 +73,8 @@ public class Graph extends VBox {
 		highlihtCurrency.addListener((observable, oldValue, newValue) -> {
 			if ((newValue == null && oldValue != null)
 					|| newValue != null && !newValue.equals(oldValue)) {
-				Series<LocalDateTime, Number> removed = remove(newValue);
-				display(removed.getData(), newValue);
-				history.drawHistoryFor(removed.getData(), newValue);
+				
+				thick(oldValue, newValue);
 			}
 		});
 	}
@@ -95,6 +96,7 @@ public class Graph extends VBox {
 		s.setData(data);
 		s.setName(currency.symbol);
 		series.add(s);
+		s.nodeProperty().get().setStyle("-fx-stroke-width: 1px;");
 	}
 	
 	public Series<LocalDateTime, Number> remove(Currency currency) {
@@ -111,6 +113,17 @@ public class Graph extends VBox {
 			return series.remove(index);
 		}
 		return null;
+	}
+	
+	private void thick(Currency thin, Currency thick) {
+		series.forEach((s) -> {
+			if (thin != null && s.getName().equals(thin.symbol)) {
+				s.nodeProperty().get().setStyle("-fx-stroke-width: 1px;");
+			}
+			if (thick != null && s.getName().equals(thick.symbol)) {
+				s.nodeProperty().get().setStyle("-fx-stroke-width: 3px;");
+			}
+		});
 	}
 
 }
