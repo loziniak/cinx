@@ -31,7 +31,7 @@ public class Graph extends VBox {
 	
 	OperationsUI history;
 	
-	public Graph(final PricesHistory pricesHistory, ObjectProperty<Currency> highlihtCurrency, OperationLog operationLog) {
+	public Graph(final PricesHistory pricesHistory, ObjectProperty<Currency> highlightCurrency, OperationLog operationLog) {
 		super();
 		setFillWidth(true);
 
@@ -64,13 +64,13 @@ public class Graph extends VBox {
 		pricesHistory.displayedCurrencies.addListener((MapChangeListener.Change<? extends Currency, ? extends List<Point>> change) -> {
 			if (change.wasAdded()) {
 				display(change.getValueAdded(), change.getKey());
-				highlihtCurrency.set(change.getKey());
+				highlightCurrency.set(change.getKey());
 			} else if (change.wasRemoved()) {
 				remove(change.getKey());
 			}
 		});
 		
-		highlihtCurrency.addListener((observable, oldValue, newValue) -> {
+		highlightCurrency.addListener((observable, oldValue, newValue) -> {
 			if ((newValue == null && oldValue != null)
 					|| newValue != null && !newValue.equals(oldValue)) {
 				

@@ -4,6 +4,9 @@ import java.util.function.Consumer;
 
 import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
+import javafx.collections.ObservableSet;
+import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -21,8 +24,10 @@ public class WalletSlider extends VBox {
 	
 	private final CheckBox freeze = new CheckBox();
 	
+	private final Button remove = new Button("X");
+	
 
-	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlihtCurrency, Consumer<WalletSlider> onFreezeWithCTRL) {
+	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlightCurrency, Consumer<WalletSlider> onFreezeWithCTRL, ObservableSet<Currency> chartCurrencies) {
 		super();
 		currency = s.getCurrency();
 		
@@ -30,6 +35,7 @@ public class WalletSlider extends VBox {
 		getChildren().add(percentChange);
 		getChildren().add(slider.node());
 		getChildren().add(freeze);
+		getChildren().add(remove);
 		
 		slider.valueProperty().bindBidirectional(s.percent);
 
@@ -41,6 +47,7 @@ public class WalletSlider extends VBox {
 						.then(Color.BLUE)
 						.otherwise(Color.GREY)));
 		
+		freeze.setPadding(new Insets(3));
 		s.freeze.bind(freeze.selectedProperty());
 		freeze.setOnMouseClicked((event) -> {
 			if (event.isControlDown()) {
@@ -57,10 +64,15 @@ public class WalletSlider extends VBox {
 			}
 		});
 		
+		freeze.setPadding(new Insets(3));
+		remove.setOnAction(event -> {
+			chartCurrencies.remove(currency);
+		});
+		
 		s.bindIsChanging(slider.valueChangingProperty());
 		
 		setOnMouseEntered((event) -> {
-			highlihtCurrency.set(currency);
+			highlightCurrency.set(currency);
 		});
 	}
 	

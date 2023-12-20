@@ -53,7 +53,7 @@ public class App extends Application {
 	private OperationLog operationLog;
 
 	private ObservableSet<Currency> chartCurrencies = FXCollections.observableSet();
-	private ObjectProperty<Currency> highlihtCurrency = new SimpleObjectProperty<>();
+	private ObjectProperty<Currency> highlightCurrency = new SimpleObjectProperty<>();
 	
 	private Logger log = new Logger();
 
@@ -138,9 +138,9 @@ public class App extends Application {
 
 	private VBox analyzeLayout(Tab trade) {
 		HBox top = new HBox();
-		top.getChildren().add(new Graph(pricesHistory, highlihtCurrency, operationLog));
+		top.getChildren().add(new Graph(pricesHistory, highlightCurrency, operationLog));
 		
-		WalletUI walletUI = new WalletUI(wallet, highlihtCurrency);
+		WalletUI walletUI = new WalletUI(wallet, chartCurrencies, highlightCurrency);
 		walletUI.setPadding(new Insets(20));
 		walletUI.setSpacing(10);
 		
@@ -159,7 +159,7 @@ public class App extends Application {
 
 		VBox outer = new VBox();
 		outer.getChildren().add(top);
-		outer.getChildren().add(new CurrencySelector(wallet, chartCurrencies));
+		outer.getChildren().add(new CurrencySelector(wallet, chartCurrencies, highlightCurrency));
 		outer.setPadding(new Insets(10));
 		return outer;
 	}

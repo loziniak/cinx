@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.MapChangeListener.Change;
+import javafx.collections.ObservableSet;
 import javafx.scene.layout.HBox;
 import pl.robotix.cinx.Currency;
 
@@ -20,7 +21,7 @@ public class WalletUI extends HBox {
 		});
 	};
 	
-	public WalletUI(Wallet wallet, ObjectProperty<Currency> highlihtCurrency) {
+	public WalletUI(Wallet wallet, ObservableSet<Currency> chartCurrencies, ObjectProperty<Currency> highlightCurrency) {
 		super();
 		
 		List<WalletEntry> sliders = new ArrayList<>(wallet.sliders.values());
@@ -28,15 +29,15 @@ public class WalletUI extends HBox {
 			return Double.compare(s1.percent.get(), s2.percent.get());
 		}));
 		sliders.forEach((slider) -> {
-			getChildren().add(new WalletSlider(slider, highlihtCurrency, checkAllFreeze));
+			getChildren().add(new WalletSlider(slider, highlightCurrency, checkAllFreeze, chartCurrencies));
 		});
 		
 		wallet.sliders.addListener((Change<? extends Currency,? extends WalletEntry> change) -> {
 			if (change.wasAdded()) {
-				getChildren().add(new WalletSlider(change.getValueAdded(), highlihtCurrency, checkAllFreeze));
+				getChildren().add(new WalletSlider(change.getValueAdded(), highlightCurrency, checkAllFreeze, chartCurrencies));
 			}
 			if (change.wasRemoved()) {
-				getChildren().remove(new WalletSlider(change.getValueRemoved(), highlihtCurrency, checkAllFreeze));
+				getChildren().remove(new WalletSlider(change.getValueRemoved(), highlightCurrency, checkAllFreeze, chartCurrencies));
 			}
 			
 		});
