@@ -17,6 +17,7 @@ public class WalletEntry {
 	private final Currency currency;
 	private final double originalPercent;
 	private final BigDecimal originalAmount;
+	private final Wallet wallet;
 
 	final DoubleProperty percent = new SimpleDoubleProperty();
 	final DoubleBinding percentChange;
@@ -24,11 +25,12 @@ public class WalletEntry {
 	final BooleanProperty freeze = new SimpleBooleanProperty(false);
 	final BooleanProperty isChanging = new SimpleBooleanProperty(false);
 
-	public WalletEntry(Currency c, double originalPercent, BigDecimal originalAmount) {
+	public WalletEntry(Currency c, double originalPercent, BigDecimal originalAmount, Wallet wallet) {
 		this.currency = c;
 		this.originalPercent = originalPercent;
 		percent.set(originalPercent);
 		this.originalAmount = originalAmount;
+		this.wallet = wallet;
 
 		percentChange = percent.subtract(originalPercent);
 
@@ -68,6 +70,10 @@ public class WalletEntry {
 	
 	public double getPercentChange() {
 		return percentChange.doubleValue();
+	}
+	
+	public boolean canRemove() {
+		return wallet.canRemove(currency);
 	}
 	
 	public void setPercentChangeHandler(BiConsumer<double[], WalletEntry> onPercentChange) {

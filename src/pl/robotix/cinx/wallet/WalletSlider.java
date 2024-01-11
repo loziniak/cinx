@@ -27,35 +27,35 @@ public class WalletSlider extends VBox {
 	private final Button remove = new Button("X");
 	
 
-	public WalletSlider(WalletEntry s, ObjectProperty<Currency> highlightCurrency, Consumer<WalletSlider> onFreezeWithCTRL, ObservableSet<Currency> chartCurrencies) {
+	public WalletSlider(WalletEntry entry, ObjectProperty<Currency> highlightCurrency, Consumer<WalletSlider> onFreezeWithCTRL, ObservableSet<Currency> chartCurrencies) {
 		super();
-		currency = s.getCurrency();
+		currency = entry.getCurrency();
 		
-		getChildren().add(new Text(s.getCurrency().symbol));
+		getChildren().add(new Text(entry.getCurrency().symbol));
 		getChildren().add(percentChange);
 		getChildren().add(slider.node());
 		getChildren().add(freeze);
 		getChildren().add(remove);
 		
-		slider.valueProperty().bindBidirectional(s.percent);
+		slider.valueProperty().bindBidirectional(entry.percent);
 
-		percentChange.textProperty().bind(s.percentChange.asString("%+.1f"));
+		percentChange.textProperty().bind(entry.percentChange.asString("%+.1f"));
 		percentChange.textFillProperty().bind(
-				new When(s.percentChange.lessThan(0.0))
+				new When(entry.percentChange.lessThan(0.0))
 				.then(Color.RED)
-				.otherwise(new When(s.percentChange.greaterThan(0.0))
+				.otherwise(new When(entry.percentChange.greaterThan(0.0))
 						.then(Color.BLUE)
 						.otherwise(Color.GREY)));
 		
 		freeze.setPadding(new Insets(3));
-		s.freeze.bind(freeze.selectedProperty());
+		entry.freeze.bind(freeze.selectedProperty());
 		freeze.setOnMouseClicked((event) -> {
 			if (event.isControlDown()) {
 				onFreezeWithCTRL.accept(this);
 			}
 		});
 		
-		s.enabled.addListener((observable, oldValue, newValue) -> {
+		entry.enabled.addListener((observable, oldValue, newValue) -> {
 			boolean enabled = newValue;
 			if (enabled) {
 				slider.enable();
@@ -66,10 +66,12 @@ public class WalletSlider extends VBox {
 		
 		freeze.setPadding(new Insets(3));
 		remove.setOnAction(event -> {
-			chartCurrencies.remove(currency);
+			if (entry.canRemove()) {
+				chartCurrencies.remove(currency);
+			}
 		});
 		
-		s.bindIsChanging(slider.valueChangingProperty());
+		entry.bindIsChanging(slider.valueChangingProperty());
 		
 		setOnMouseEntered((event) -> {
 			highlightCurrency.set(currency);

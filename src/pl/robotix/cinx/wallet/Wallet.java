@@ -64,7 +64,7 @@ public class Wallet {
 	private void add(Currency c, BigDecimal originalAmount, double walletUSD) {
 		WalletEntry slider = new WalletEntry(c,
 				100 * originalAmount.doubleValue() * prices.getUSDFor(c).doubleValue() / walletUSD,
-				originalAmount);
+				originalAmount, this);
 		
 		if (sliders.putIfAbsent(c, slider) == null) {
 			slider.setPercentChangeHandler(onPercentChange);
