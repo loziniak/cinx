@@ -16,6 +16,7 @@ import java.util.Properties;
 public class Config {
 	
 	private static final String SUBSCRIBED_CURRENCIES_KEY = "subscribed.currencies";
+	private static final String BANNED_CURRENCIES_KEY = "banned.currencies";
 	private static final String RANDOM_CURRENCIES_COUNT_KEY = "random.currencies.count";
 	
 	private Properties data;
@@ -41,7 +42,15 @@ public class Config {
 	}
 	
 	public List<Currency> getSubscribedCurrencies() {
-		return asList(data.getProperty(SUBSCRIBED_CURRENCIES_KEY).split(",")).stream()
+		return getCurrencies(SUBSCRIBED_CURRENCIES_KEY);
+	}
+	
+	public List<Currency> getBannedCurrencies() {
+		return getCurrencies(BANNED_CURRENCIES_KEY);
+	}
+	
+	public List<Currency> getCurrencies(String propertyKey) {
+		return asList(data.getProperty(propertyKey).split(",")).stream()
 				.filter((symbol) -> !symbol.isEmpty())
 				.map((symbol) -> new Currency(symbol.trim())).collect(toList());
 	}

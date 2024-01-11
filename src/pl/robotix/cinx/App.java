@@ -79,15 +79,15 @@ public class App extends Application {
 
 		layout(primaryStage);
 
-		chartCurrencies.addAll(wallet.getCurrencies());
-
 		Config config = new Config(CONFIG_FILE);
 		var subscribed = config.getSubscribedCurrencies();
 		subscribed.removeIf((c) -> !api.isExchangeable(c));
 		chartCurrencies.addAll(subscribed);
+//		chartCurrencies.removeAll(config.getBannedCurrencies());
+		chartCurrencies.addAll(random(config)); // retrieve api btc
 
-		chartCurrencies.addAll(random(config.getRandomCurrenciesCount())); // retrieve api btc
-		
+		chartCurrencies.addAll(wallet.getCurrencies());
+
 		prices.retrieveFor(chartCurrencies); // retrieve chart (wallet, subscribed, random)
 	}
 	
@@ -97,9 +97,11 @@ public class App extends Application {
 		operationLog.close();
 	}
 	
-	private Set<Currency> random(int count) {
-		double fromFirst = 0.75;
+	private Set<Currency> random(Config config) {
+		int count = config.getRandomCurrenciesCount();
+		double fromFirst = 0.95;
 		
+		var banned = new HashSet<Currency>(config.getBannedCurrencies());
 		var curs = api.pairsForMarket(BTC); // TODO: trade with USDT, not BTC. bigger volumes.
 		prices.retrieveFor(curs);
 		
@@ -111,9 +113,12 @@ public class App extends Application {
 		if (currencyList.size() > count) {
 			currencyList.sort(prices.byVolume());
 			while (random.size() < count) {
-				random.add(currencyList.get(
+				Currency c = currencyList.get(
 						Double.valueOf(Math.random() * currencyList.size() * fromFirst).intValue()
-					));
+					);
+				if (!banned.contains(c)) {
+					random.add(c);
+				}
 			}
 		}
 		return random;
@@ -168,7 +173,8 @@ public class App extends Application {
 	private Map<Currency, BigDecimal> balanceWithBTCAndUSDT() {
 		Map<Currency, BigDecimal> balance = api.retrieveBalance();
 		
-		balance.keySet().removeIf((k) -> prices.getUSDFor(k).multiply(balance.get(k)).compareTo(BigDecimal.ONE) < 0);
+		final BigDecimal MIN_SHOW = BigDecimal.valueOf(5); 
+		balance.entrySet().removeIf((e) -> prices.getUSDFor(e.getKey()).multiply(e.getValue()).compareTo(MIN_SHOW) < 0);
 
 		if (!balance.containsKey(USDT)) {
 			balance.put(USDT, BigDecimal.ZERO);

@@ -47,7 +47,7 @@ public class BinanceApi implements SyncApi {
 	private Set<Currency> pairsForMarket;
 
 
-	public BinanceApi(String apiKey, String secret) {
+	public BinanceApi(String apiKey, String secret) throws FileNotFoundException, IOException {
 		
 		client = new SpotClientImpl("wgxkUzsuKuOor7YLkDripGXrJDMLBnvpfqmiaBAPJoeN7KYXRb9gOTNxAIzr8Y9A",
 				"WxHeNqDLVgVRNSS3u9ANKiTKvJAIXYi2dx95XEOCLrwEfRUR1SVOkMWC9Y9k7f8X", DefaultUrls.TESTNET_URL);
@@ -55,7 +55,7 @@ public class BinanceApi implements SyncApi {
 		
 		exchange = new ExchangeInfo(client.createMarket().exchangeInfo(emptyParams()));
 		pairsForMarket = pairsForMarket(MARKET_QUOTE);
-		pairsForMarket.add(BTC);
+		pairsForMarket.add(MARKET_QUOTE);
 	}
 	
 	@Override
