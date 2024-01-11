@@ -25,7 +25,9 @@ import pl.robotix.cinx.api.SyncApi;
 public class PoloniexApi implements SyncApi {
 	
 	private static final int NONCE_ERROR_RETRY_COUNT = 2; 
-	
+
+	private static final double TAKER_FEE = 0.0025;
+
 	private PoloniexExchangeService service;
 
 	public PoloniexApi(String poloniexApiKey, String poloniexSecret) {
@@ -58,12 +60,12 @@ public class PoloniexApi implements SyncApi {
 	
 	@Override
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
-		PoloniexOrderResult res = service.buy(pair.toString(), rate, amount, true, false, false);
+		PoloniexOrderResult res = service.buy(pairString(pair), rate, amount, true, false, false);
 
 		for (int i = 0; i < NONCE_ERROR_RETRY_COUNT; i++) {
 			if (res.error != null && res.error.startsWith("Nonce must be greater than ")) {
 				System.out.println("Buy "+pair+" retrying.");
-		                    res = service.buy(pair.toString(), rate, amount, true, false, false);
+		                    res = service.buy(pairString(pair), rate, amount, true, false, false);
 			}
 		}
 		return res.error == null;
@@ -71,12 +73,12 @@ public class PoloniexApi implements SyncApi {
 
 	@Override
 	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
-		PoloniexOrderResult res = service.sell(pair.toString(), rate, amount, true, false, false);
+		PoloniexOrderResult res = service.sell(pairString(pair), rate, amount, true, false, false);
 
 		for (int i = 0; i < NONCE_ERROR_RETRY_COUNT; i++) {
 			if (res.error != null && res.error.startsWith("Nonce must be greater than ")) {
 				System.out.println("Sell "+pair+" retrying.");
-		                    res = service.sell(pair.toString(), rate, amount, true, false, false);
+		                    res = service.sell(pairString(pair), rate, amount, true, false, false);
 			}
 		}
 		return res.error == null;
@@ -93,7 +95,7 @@ public class PoloniexApi implements SyncApi {
         	pointCreator = (point) -> new Point(point.date.toLocalDateTime() , point.weightedAverage.doubleValue());
         }
         
-        return service.returnChartData(pair.toString(), range.densitySeconds, range.getStart())
+        return service.returnChartData(pairString(pair), range.densitySeconds, range.getStart())
         .stream()
         .map(pointCreator)
         .collect(toList());
@@ -123,18 +125,23 @@ public class PoloniexApi implements SyncApi {
 	}
 	
 	@Override
-	public String pairString(Pair pair) {
-		return pair.quote.symbol + "_" + pair.base.symbol;
+	public boolean isExchangeable(Currency c) {
+		return true;
 	}
 	
 	@Override
-	public Pair pair(String pairString) {
+	public double takerFee() {
+		return TAKER_FEE;
+	}
+
+
+	private static String pairString(Pair pair) {
+		return pair.quote.symbol + "_" + pair.base.symbol;
+	}
+	
+	private static Pair pair(String pairString) {
 		String[] currencySymbols = pairString.split("_");
 		return new Pair(currencySymbols[0], currencySymbols[1]);
 	}
 	
-	@Override
-	public boolean isExchangeable(Currency c) {
-		return true;
-	}
 }

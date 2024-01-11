@@ -8,10 +8,12 @@ import static pl.robotix.cinx.Pair.USDT_BTC;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -31,12 +33,13 @@ import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
 import pl.robotix.cinx.api.SyncApi;
+import pl.robotix.cinx.trade.Operation;
 
 public class BinanceApi implements SyncApi {
 	
 	private static final Currency MARKET_QUOTE = BTC; // TODO: trade with USDT pairs (bigger volumes)
 	
-	private static final String USDT_BTC_SYMBOL = pairStringStatic(USDT_BTC);
+	private static final String USDT_BTC_SYMBOL = pairString(USDT_BTC);
 	
 	private static final HashMap<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<TimeRange, TimeRngInterval>();
 	
@@ -46,6 +49,8 @@ public class BinanceApi implements SyncApi {
 
 	private Set<Currency> pairsForMarket;
 
+	private Account account;
+
 
 	public BinanceApi(String apiKey, String secret) throws FileNotFoundException, IOException {
 		
@@ -53,6 +58,7 @@ public class BinanceApi implements SyncApi {
 				"WxHeNqDLVgVRNSS3u9ANKiTKvJAIXYi2dx95XEOCLrwEfRUR1SVOkMWC9Y9k7f8X", DefaultUrls.TESTNET_URL);
 //		client = new SpotClientImpl(apiKey, secret, DefaultUrls.TESTNET_URL);
 		
+		account = accountInfo();
 		exchange = new ExchangeInfo(client.createMarket().exchangeInfo(emptyParams()));
 		pairsForMarket = pairsForMarket(MARKET_QUOTE);
 		pairsForMarket.add(MARKET_QUOTE);
@@ -74,9 +80,6 @@ public class BinanceApi implements SyncApi {
 
 	@Override
 	public Map<Currency, BigDecimal> retrieveBalance() {
-		var json = client.createTrade().account(emptyParams());
-		var account = new Account(json);
-
 		var balance = new HashMap<Currency, BigDecimal>();
 		account.getBalances().stream()
 //				.skip(5).limit(10) // TODO: just for testnet
@@ -93,14 +96,12 @@ public class BinanceApi implements SyncApi {
 
 	@Override
 	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
-		// TODO implement
-		throw new UnsupportedOperationException("Not implemented");
+		return marketOrder(pair, amount, Operation.Type.BUY);
 	}
 
 	@Override
 	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
-		// TODO implement
-		throw new UnsupportedOperationException("Not implemented");
+		return marketOrder(pair, amount, Operation.Type.SELL);
 	}
 
 	@Override
@@ -183,18 +184,51 @@ public class BinanceApi implements SyncApi {
 			return pairsForMarket;
 		}
 		return exchange.getSymbols().stream()
+				.filter((s) -> s.isSpot() && s.isMarket())
 				.filter((s) -> s.toPair().quote.equals(c))
 				.map((s) -> s.toPair().base)
 				.collect(Collectors.toSet());
 	}
 
 	@Override
-	public String pairString(Pair pair) {
-		return pairStringStatic(pair);
+	public boolean isExchangeable(Currency c) {
+		return c.equals(USDT) || c.equals(BTC) ||  pairsForMarket.contains(c);
+	}
+
+	@Override
+	public double takerFee() {
+		return account.getTakerRate();
+	}
+
+	
+	private Account accountInfo() {
+		var json = client.createTrade().account(emptyParams());
+		return new Account(json);
 	}
 	
-	@Override
-	public Pair pair(String pairString) {
+	private boolean marketOrder(Pair pair, BigDecimal baseAmount, Operation.Type operation) {
+		var params = emptyParams();
+		params.put("symbol", pairString(pair));
+		params.put("side", operation.name());
+		params.put("type", "MARKET");
+		params.put("newOrderRespType", "RESULT");
+
+		BigDecimal stepSize = exchange.getSymbol(pair).getStepSize();
+//		params.put("quantity", formatDouble(baseAmount));
+		params.put("quantity", formatDouble(
+				baseAmount.divide(stepSize).setScale(0, RoundingMode.DOWN).multiply(stepSize)
+			));
+		
+		String response = client.createTrade().newOrder(params);
+		String status = new JSONObject(response).getString("status");
+		return status.equals("FILLED");
+	}
+	
+	private HashMap<String, Object> emptyParams() {
+		return new HashMap<String, Object>();
+	}
+
+	private static Pair pair(String pairString) {
 		if (!pairString.endsWith(MARKET_QUOTE.symbol)) {
 			if (pairString.equals(USDT_BTC_SYMBOL)) {
 				return USDT_BTC;
@@ -208,17 +242,12 @@ public class BinanceApi implements SyncApi {
 			);
 	}
 	
-	@Override
-	public boolean isExchangeable(Currency c) {
-		return c.equals(USDT) || c.equals(BTC) ||  pairsForMarket.contains(c);
+	private static String pairString(Pair pair) {
+		return pair.base.symbol + pair.quote.symbol;
 	}
 	
-	private HashMap<String, Object> emptyParams() {
-		return new HashMap<String, Object>();
-	}
-
-	private static String pairStringStatic(Pair pair) {
-		return pair.base.symbol + pair.quote.symbol;
+	private static String formatDouble(BigDecimal value) {
+		return String.format(Locale.ROOT, "%.8f", value);
 	}
 
 	private static enum TimeRngInterval {

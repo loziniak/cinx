@@ -155,9 +155,7 @@ public class App extends Application {
 		Button generateOperations = new Button("Generate operations");
 		generateOperations.setOnAction((event) -> {
 			trade.getTabPane().getSelectionModel().select(trade);
-			prices = api.retrievePrices();
-			trader.setPrices(prices);
-			trader.generateOperations();
+			trader.generateOperations(api.takerFee());
 		});
 		topRight.getChildren().add(generateOperations);
 		top.getChildren().add(topRight);

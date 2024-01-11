@@ -67,7 +67,7 @@ public class TraderTest {
 		
 		System.out.println(wallet.getPercentChanges());
 		
-		new Trader(prices, wallet, log, new OperationLog("/dev/null")).generateOperations();
+		new Trader(prices, wallet, log, new OperationLog("/dev/null")).generateOperations(0.0025);
 //		expected output:
 //		
 //		A --> B: -6,00%

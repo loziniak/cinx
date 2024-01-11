@@ -34,8 +34,6 @@ public class Trader {
 	private static final BigDecimal SELL_RATE_MOD = BigDecimal.valueOf(9, 1); // 0.9
 	private static final BigDecimal TRANSITION_RATE_MOD = BigDecimal.valueOf(99, 2); // 0.99
 	
-	private static final double TAKER_FEE = 0.0025; // TODO: move TAKER_FEE to Api.takerFee()
-	
 	private Prices prices;
 	private final Wallet wallet;
 	private final Logger log;
@@ -52,12 +50,13 @@ public class Trader {
 	}
 	
 	
-	public List<Operation> generateOperations() {
+	public List<Operation> generateOperations(double takerFee) {
 		operations.clear();
 
 		Map<Currency, Double> changes = wallet.getPercentChanges();
 		
 		List<Currency> toProcess = altcoinClearingsFirst(changes);
+		prices.retrieveFor(toProcess);
 		correctDrift(changes);
 
 		List<Currency> positive = new ArrayList<>();
@@ -69,7 +68,7 @@ public class Trader {
 			double processedChange = changes.get(processed);
 			boolean clearedToBTC = false;
 			if (isAltcoinClearing(processed, processedChange)) {
-				operations.add(sellAll(new Pair(BTC, processed)));
+				operations.add(sellAll(new Pair(BTC, processed))); // TODO: trade with MARKET_QUOTE
 				clearedToBTC = true;
 			}
 			changes.remove(processed);
@@ -127,7 +126,7 @@ public class Trader {
 		});
 		log.info("Overall change: " + String.format(LOG_USD_FORMAT, usdOverallChangeHolder[0]));
 		log.info("Overall fee: " + String.format(LOG_USD_FORMAT, 
-				usdOverallChangeHolder[0] * TAKER_FEE));
+				usdOverallChangeHolder[0] * takerFee));
 		log.info("=================================");
 		
 		return operations;
@@ -169,6 +168,7 @@ public class Trader {
 	}
 	
 	private List<Operation> operationsFor(Currency from, Currency to, BigDecimal usdChange, boolean clearedToBTC) {
+		System.out.println("operationsFor: "+from+" -> "+to+", "+String.format(LOG_USD_FORMAT, usdChange));
 		if (usdChange.compareTo(BigDecimal.ZERO) < 0) {
 			Currency tmp = to;
 			to = from;
@@ -309,10 +309,6 @@ public class Trader {
 	
 	private BigDecimal percentToUsd(double percent) {
 		return new BigDecimal(percent * wallet.getWalletUSD() / 100.0);
-	}
-	
-	public void setPrices(Prices prices) {
-		this.prices = prices;
 	}
 	
 }

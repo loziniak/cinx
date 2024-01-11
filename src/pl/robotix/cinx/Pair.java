@@ -32,14 +32,14 @@ public class Pair {
 		return new Pair(base, quote);
 	}
 	
-	public boolean isReverse() {
+	public boolean isReverse() { // TODO: depend on system's MARKET_QUOTE
 		return base.equals(USDT)
 				|| base.equals(BTC) && !quote.equals(USDT);
 	}
 
 	@Override
 	public String toString() {
-		return quote.symbol + "_" + base.symbol;
+		return quote.symbol + "/" + base.symbol;
 	}
 	
 	@Override

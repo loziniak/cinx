@@ -29,7 +29,11 @@ public class Operation {
 	}
 	
 	public static enum Type {
-		BUY, SELL
+		BUY, SELL;
+		
+		public Type reverse() {
+			return this.equals(BUY) ? SELL : BUY;
+		}
 	}
 	
 }

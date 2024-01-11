@@ -20,10 +20,8 @@ public interface Api {
 	
 	Collection<Currency> pairsForMarket(Currency c);
 	
-	String pairString(Pair pair);
-	
-	Pair pair(String pairString);
-
 	boolean isExchangeable(Currency c);
+	
+	double takerFee();
 
 }

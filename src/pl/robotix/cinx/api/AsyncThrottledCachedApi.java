@@ -103,18 +103,13 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 	}
 	
 	@Override
-	public Pair pair(String pairString) {
-		return api.pair(pairString);
-	}
-	
-	@Override
-	public String pairString(Pair pair) {
-		return api.pairString(pair);
-	}
-	
-	@Override
 	public boolean isExchangeable(Currency c) {
 		return api.isExchangeable(c);
+	}
+	
+	@Override
+	public double takerFee() {
+		return api.takerFee();
 	}
 	
 	

@@ -10,19 +10,29 @@ import org.json.JSONObject;
 public class Account {
 	
 	private List<Balance> balances;
+	
+	private double takerRate;
 
 	public Account(String json) {
-		var b = new JSONObject(json).getJSONArray(Keys.balances.name());
+		var account = new JSONObject(json);
+		var b = account.getJSONArray(Keys.balances.name());
 		balances = new ArrayList<>(20);
 		for (Object o : b) {
 			if (o instanceof JSONObject) {
 				balances.add(new Balance((JSONObject) o));
 			}
 		}
+		
+		var rates = account.getJSONObject(Keys.commissionRates.name());
+		takerRate = Double.parseDouble(rates.getString(Keys.taker.name()));
 	}
 	
 	public List<Balance> getBalances() {
 		return Collections.unmodifiableList(balances);
+	}
+	
+	public double getTakerRate() {
+		return takerRate;
 	}
 	
 	public static class Balance {
@@ -50,7 +60,9 @@ public class Account {
 	}
 
 	private static enum Keys {
-		balances
+		balances,
+		commissionRates,
+			taker
 	}
 	
 }
