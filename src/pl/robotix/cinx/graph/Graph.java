@@ -1,6 +1,7 @@
 package pl.robotix.cinx.graph;
 
 import static javafx.collections.FXCollections.observableArrayList;
+import static pl.robotix.cinx.Currency.WALLET;
 
 import java.time.LocalDateTime;
 import java.util.Iterator;
@@ -96,7 +97,7 @@ public class Graph extends VBox {
 		s.setData(data);
 		s.setName(currency.symbol);
 		series.add(s);
-		s.nodeProperty().get().setStyle("-fx-stroke-width: 1px;");
+		normal(s);
 	}
 	
 	public Series<LocalDateTime, Number> remove(Currency currency) {
@@ -118,12 +119,28 @@ public class Graph extends VBox {
 	private void thick(Currency thin, Currency thick) {
 		series.forEach((s) -> {
 			if (thin != null && s.getName().equals(thin.symbol)) {
-				s.nodeProperty().get().setStyle("-fx-stroke-width: 1px;");
+				normal(s);
 			}
 			if (thick != null && s.getName().equals(thick.symbol)) {
-				s.nodeProperty().get().setStyle("-fx-stroke-width: 3px;");
+				thick(s);
 			}
 		});
+	}
+	
+	private void normal(Series<LocalDateTime,Number> s) {
+		if (s.getName().equals(WALLET.symbol)) {
+			width(s, 4);
+		} else {
+			width(s, 1);
+		}
+	}
+	
+	private void thick(Series<LocalDateTime,Number> s) {
+		width(s, 3);
+	}
+	
+	private void width(Series<LocalDateTime,Number> s, int width) {
+		s.nodeProperty().get().setStyle("-fx-stroke-width: "+width+"px;");
 	}
 
 }

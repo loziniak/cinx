@@ -5,6 +5,7 @@ import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import javafx.application.Application;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -55,6 +57,7 @@ public class App extends Application {
 
 	private ObservableSet<Currency> chartCurrencies = FXCollections.observableSet();
 	private ObjectProperty<Currency> highlightCurrency = new SimpleObjectProperty<>();
+	private ObjectProperty<Map<Currency, Double>> walletCurrencies = new SimpleObjectProperty<>(null);
 	
 	private Logger log = new Logger();
 
@@ -72,10 +75,10 @@ public class App extends Application {
 		api = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2);
 //		api = new SyncApiWrapper(new BinanceApi(binanceApiKey, binanceSecret));
 		api.initTimeRanges();
-		pricesHistory = new PricesHistory(api, chartCurrencies);
+		pricesHistory = new PricesHistory(api, chartCurrencies, walletCurrencies);
 
 		prices = new Prices(api);
-		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies, prices); // retrieve balance
+		wallet = new Wallet(balanceWithBTCAndUSDT(), chartCurrencies, prices, walletCurrencies); // retrieve balance
 		trader = new Trader(prices, wallet, log, operationLog);
 
 		layout(primaryStage);
@@ -88,6 +91,7 @@ public class App extends Application {
 		chartCurrencies.addAll(random(config)); // retrieve api btc
 
 		chartCurrencies.addAll(wallet.getCurrencies());
+		wallet.updateWalletCurrencies();
 
 		prices.retrieveFor(chartCurrencies); // retrieve chart (wallet, subscribed, random)
 	}

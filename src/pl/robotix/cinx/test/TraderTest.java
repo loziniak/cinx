@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
@@ -53,7 +54,7 @@ public class TraderTest {
 		balance.put(new Currency("C"), valueOf(100.0));
 		balance.put(new Currency("D"), valueOf(100.0));
 		balance.put(new Currency("E"), valueOf(100.0));
-		Wallet wallet = new Wallet(balance, FXCollections.observableSet(), prices);
+		Wallet wallet = new Wallet(balance, FXCollections.observableSet(), prices, new SimpleObjectProperty<>());
 		
 		System.out.println(wallet.getPercentChanges());
 		

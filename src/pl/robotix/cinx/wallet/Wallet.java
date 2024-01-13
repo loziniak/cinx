@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -24,11 +25,14 @@ public class Wallet {
 	
 	private final Prices prices;
 	
+	private ObjectProperty<Map<Currency, Double>> walletCurrencies;
+	
 	final ObservableMap<Currency, WalletEntry> sliders;
 	
 
-	public Wallet(Map<Currency, BigDecimal> balance, ObservableSet<Currency> chartCurrencies, Prices prices) {
+	public Wallet(Map<Currency, BigDecimal> balance, ObservableSet<Currency> chartCurrencies, Prices prices, ObjectProperty<Map<Currency, Double>> walletCurrencies) {
 		this.prices = prices;
+		this.walletCurrencies = walletCurrencies;
 
 		sliders = FXCollections.observableMap(new HashMap<>());
 		
@@ -62,9 +66,8 @@ public class Wallet {
 	}
 
 	private void add(Currency c, BigDecimal originalAmount, double walletUSD) {
-		WalletEntry slider = new WalletEntry(c,
-				100 * originalAmount.doubleValue() * prices.getUSDFor(c).doubleValue() / walletUSD,
-				originalAmount, this);
+		double originalPercent = 100 * originalAmount.doubleValue() * prices.getUSDFor(c).doubleValue() / walletUSD;
+		WalletEntry slider = new WalletEntry(c, originalPercent, originalAmount, this);
 		
 		if (sliders.putIfAbsent(c, slider) == null) {
 			slider.setPercentChangeHandler(onPercentChange);
@@ -84,6 +87,7 @@ public class Wallet {
 		WalletEntry removed = sliders.remove(c);
 		if (removed != null) {
 			changePercentsProportionally(removed, 0.0, removed.getPercent(), true);
+			updateWalletCurrencies();
 		}
 	}
 	
@@ -134,6 +138,16 @@ public class Wallet {
 		onPercentChange.enable();
 	}
 	
+	public void updateWalletCurrencies() {
+		var newCurrencies = new HashMap<Currency, Double>();
+		sliders.forEach((currency, entry) -> {
+			if (entry.getPercent() > 0.0) {
+				newCurrencies.put(currency, entry.getPercent());
+			}
+		});
+		walletCurrencies.set(newCurrencies);
+	}
+	
 	public Set<Currency> getCurrencies() {
 		return sliders.keySet();
 	}
@@ -179,6 +193,7 @@ public class Wallet {
 		public void accept(double[] values, WalletEntry slider) {
 			if (!bypass) {
 				changePercentsProportionally(slider, values[0], values[1], false);
+				updateWalletCurrencies();
 			}
 		}
 		

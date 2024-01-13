@@ -1,11 +1,15 @@
 package pl.robotix.cinx.graph;
 
+import static pl.robotix.cinx.Currency.WALLET;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -16,6 +20,7 @@ import java.util.function.Consumer;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
@@ -36,7 +41,7 @@ public class PricesHistory {
 	private AsyncApi api;
 	
 
-	public PricesHistory(AsyncApi api, ObservableSet<Currency> chartCurrencies) {
+	public PricesHistory(AsyncApi api, ObservableSet<Currency> chartCurrencies, ObjectProperty<Map<Currency, Double>> walletCurrencies) {
 		this.api = api;
 
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {
@@ -61,6 +66,45 @@ public class PricesHistory {
 				});
 			}
 		});
+
+		walletCurrencies.addListener((observable, oldValue, newValue) -> {
+			displayedCurrencies.remove(WALLET);
+			
+			ArrayList<Point> walletHistory = new ArrayList<Point>();
+			if (!displayedCurrencies.isEmpty()) {
+				var wc = newValue;
+//				double[] percents = new double[wc.size()];
+				double[] amounts = new double[wc.size()];
+				ArrayList<double[]> values = new ArrayList<double[]>();
+				List<Point>[] histories = (List<Point>[]) new List[wc.size()];
+				int minHistSize = Integer.MAX_VALUE;
+
+				Object[] currencies = wc.keySet().toArray();
+				for (int i=0; i<currencies.length; i++) {
+					var percent = wc.get(currencies[i]).doubleValue();
+					var history = displayedCurrencies.get(currencies[i]);
+					var price = history.get(history.size() - 1).value;
+					amounts[i] = percent / price / 100;
+					histories[i] = history;
+					if (history.size() < minHistSize) {
+						minHistSize = history.size();
+					}
+				}
+				
+				if (currencies.length > 0) {
+					for (int j=0; j<minHistSize; j++) {
+						double walletValue = 0.0;
+						for (int i=0; i<currencies.length; i++) {
+							
+							walletValue += histories[i].get(j).value * amounts[i];
+						}
+						walletHistory.add(new Point(histories[0].get(j).date, walletValue));
+					}
+				}
+				displayedCurrencies.put(WALLET, walletHistory);			
+			}
+		});
+		
 	}
 
 	public void retrieveUSDPriceHistory(Currency currency, Consumer<List<Point>> callback) {
@@ -121,7 +165,7 @@ public class PricesHistory {
 	}
 	
 	private static List<Point> initWithOnes(TimeRange range) {
-		List<Point> usdPriceHistory = new LinkedList<>();
+		List<Point> usdPriceHistory = new ArrayList<>(100);
 		long start = range.getStart();
 		for (int i=0; i < range.getPointsCount(); i++) {
 			usdPriceHistory.add(new Point(
