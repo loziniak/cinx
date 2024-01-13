@@ -23,7 +23,7 @@ import pl.robotix.cinx.TimeRange;
 
 public class AsyncThrottledCachedApi implements AsyncApi {
 	
-	private static final long POLONIEX_MIN_OPERATION_DELAY_MS = 400;
+	private static final long POLONIEX_MIN_OPERATION_DELAY_MS = 200;
 	private static final long THROTTLE_QUEUES_COUNT = 2; // sync and async
 	private static final long THROTTLE_SAFETY_MARGIN_MS = 100;
 	

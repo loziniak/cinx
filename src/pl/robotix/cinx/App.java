@@ -24,6 +24,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.AsyncApi;
+import pl.robotix.cinx.api.AsyncThrottledCachedApi;
 import pl.robotix.cinx.api.SyncApiWrapper;
 import pl.robotix.cinx.api.binance.BinanceApi;
 import pl.robotix.cinx.graph.Graph;
@@ -68,8 +69,8 @@ public class App extends Application {
 		
 		operationLog = new OperationLog(LOG_FILE);
 
-//		api = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2);
-		api = new SyncApiWrapper(new BinanceApi(binanceApiKey, binanceSecret));
+		api = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2);
+//		api = new SyncApiWrapper(new BinanceApi(binanceApiKey, binanceSecret));
 		api.initTimeRanges();
 		pricesHistory = new PricesHistory(api, chartCurrencies);
 
