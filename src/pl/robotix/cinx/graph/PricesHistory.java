@@ -1,5 +1,7 @@
 package pl.robotix.cinx.graph;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static pl.robotix.cinx.Currency.WALLET;
 
 import java.time.LocalDateTime;
@@ -137,23 +139,18 @@ public class PricesHistory {
 					throw new RuntimeException(e);
 				}
 				
-				List<Point> usdPriceHistory = initWithOnes(timeRange.getValue());
+				ArrayList<Point> usdPriceHistory = initWithOnes(timeRange.getValue());
 				histories.forEach((intermediateHistory) -> {
-					Iterator<Point> intermediateIterator = intermediateHistory.iterator();
-					Point intermediatePoint = usdPriceHistory.get(0);
-					int filled = 0;
-					try {
-						for (Point usdPoint: usdPriceHistory) {
-							intermediatePoint = intermediateIterator.next();
-							usdPoint.value *= intermediatePoint.value;
-							filled++;
-						}
-						
-					} catch (NoSuchElementException e) { // intermediateHistory had less data than necessary
-						Iterator<Point> i = usdPriceHistory.listIterator(filled);
-						while (i.hasNext()) {
-							i.next().value *= intermediatePoint.value; // fill using last known price
-						}
+
+					var ihCount = min(intermediateHistory.size(), usdPriceHistory.size());
+					var ihSmallerBy = usdPriceHistory.size() - ihCount;
+
+					for (int i = usdPriceHistory.size() - 1; i >= ihSmallerBy; i--) {
+						usdPriceHistory.get(i).value *= intermediateHistory.get(i - ihSmallerBy).value;
+					}
+					double firstKnownPrice = intermediateHistory.get(0).value;
+					for (int i = ihSmallerBy - 1; i >= 0; i--) {
+						usdPriceHistory.get(i).value *= firstKnownPrice;
 					}
 				});
 				
@@ -164,8 +161,8 @@ public class PricesHistory {
 		new Thread(compositeTask).start();
 	}
 	
-	private static List<Point> initWithOnes(TimeRange range) {
-		List<Point> usdPriceHistory = new ArrayList<>(100);
+	private static ArrayList<Point> initWithOnes(TimeRange range) {
+		ArrayList<Point> usdPriceHistory = new ArrayList<>(100);
 		long start = range.getStart();
 		for (int i=0; i < range.getPointsCount(); i++) {
 			usdPriceHistory.add(new Point(

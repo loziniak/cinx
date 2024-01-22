@@ -1,6 +1,6 @@
 package pl.robotix.cinx.api.binance;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toCollection;
 import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.Pair.USDT_BTC;
@@ -12,7 +12,6 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -105,7 +104,7 @@ public class BinanceApi implements SyncApi {
 	}
 
 	@Override
-	public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
+	public ArrayList<Point> retrievePriceHistory(Pair pair, TimeRange range) {
 		Function<Kline, Point> pointCreator;
 		if (pair.isReverse()) {
 			pointCreator = (kline) -> new Point(kline.getCloseTime(),
@@ -125,7 +124,7 @@ public class BinanceApi implements SyncApi {
 				.map((obj) -> {
 					return pointCreator.apply(new Kline(obj));
 				})
-				.collect(toList());
+				.collect(toCollection(ArrayList::new));
 
 		return points;
 	}
