@@ -168,7 +168,7 @@ public class BinanceApi implements SyncApi {
 			try {
 				var pair = pair(ticker.getSymbol());
 				prices.put(pair, ticker.getLastPrice());
-				volumes.put(pair, ticker.getVolume());
+				volumes.put(pair, ticker.getQuoteVolume());
 			} catch (IllegalArgumentException e) {
 				System.out.println("Illegal ticker symbol: "+ticker.getSymbol());
 			}
