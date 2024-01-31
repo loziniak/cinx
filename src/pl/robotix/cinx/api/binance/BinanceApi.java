@@ -24,6 +24,7 @@ import org.json.JSONObject;
 
 import com.binance.connector.client.SpotClient;
 import com.binance.connector.client.enums.DefaultUrls;
+import com.binance.connector.client.exceptions.BinanceClientException;
 import com.binance.connector.client.impl.SpotClientImpl;
 import com.binance.connector.client.utils.signaturegenerator.Ed25519SignatureGenerator;
 
@@ -216,14 +217,18 @@ public class BinanceApi implements SyncApi {
 		params.put("newOrderRespType", "RESULT");
 
 		BigDecimal stepSize = exchange.getSymbol(pair).getStepSize();
-//		params.put("quantity", formatDouble(baseAmount));
 		params.put("quantity", formatDouble(
 				baseAmount.divide(stepSize).setScale(0, RoundingMode.DOWN).multiply(stepSize)
 			));
 		
-		String response = client.createTrade().newOrder(params);
-		String status = new JSONObject(response).getString("status");
-		return status.equals("FILLED");
+		try {
+			String response = client.createTrade().newOrder(params);
+			String status = new JSONObject(response).getString("status");
+			return status.equals("FILLED");
+		} catch (BinanceClientException e) {
+			System.err.println(pair.toString() + " " + operation + " client error: " +  e.getMessage());
+			return false;
+		}
 	}
 	
 	private HashMap<String, Object> emptyParams() {

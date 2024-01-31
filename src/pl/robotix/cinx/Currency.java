@@ -7,7 +7,7 @@ public class Currency {
 	public static final Currency USDT = new Currency("USDT");
 	public static final Currency BTC = new Currency("BTC");
 
-	public static final Currency WALLET = new Currency("virtual(WALLET)");
+	public static final Currency WALLET = new Currency("v-WALLET");
 
 	public final String symbol;
 

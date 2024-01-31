@@ -39,6 +39,23 @@ public class CurrencySelector extends FlowPane {
 		for (Currency c: currencyList) {
 			getChildren().add(currencyButton(c, wallet, chartCurrencies, highlightCurrency));
 		}
+
+		chartCurrencies.addListener((Change<? extends Currency> change) -> {
+			Currency added = change.getElementAdded();
+			Currency removed = change.getElementRemoved();
+
+			Currency changed = added != null ? added : removed;
+			getChildren().stream()
+				.filter(node -> node instanceof ToggleButton 
+						&& ((ToggleButton) node).getText().equals(changed.symbol))
+				.map(node -> (ToggleButton) node)
+				.forEach(button -> {
+					if (change.wasAdded()) { button.selectedProperty().set(true); }
+
+					// FIXME: does not work when clicking "X" under the slider.
+					else if (change.wasRemoved()) { button.selectedProperty().set(false); }
+				});
+		});
 	}
 	
 	private ToggleButton currencyButton(final Currency currency, Wallet wallet, ObservableSet<Currency> chartCurrencies, ObjectProperty<Currency> highlightCurrency) {
@@ -54,6 +71,7 @@ public class CurrencySelector extends FlowPane {
 					return;
 				}
 
+				bypass = true;
 				boolean selected = newValue.booleanValue(); 
 				if (selected) {
 					chartCurrencies.add(currency);
@@ -61,25 +79,10 @@ public class CurrencySelector extends FlowPane {
 					if (wallet.canRemove(currency)) {
 						chartCurrencies.remove(currency);
 					} else {
-						bypass = true;
 						button.selectedProperty().set(true);
-						bypass = false;
 					}
 				}
-			}
-		});
-		
-		chartCurrencies.addListener((Change<? extends Currency> change) -> {
-			Currency added = change.getElementAdded();
-			Currency removed = change.getElementRemoved();
-
-			if (change.wasAdded() && added.equals(currency)) {
-				if (!button.isSelected()) {
-					button.setSelected(true);
-				}
-			}
-			if (change.wasRemoved() && removed.equals(currency)) {
-				button.selectedProperty().set(false); // FIXME: does not work when clicking "X" under the slider.
+				bypass = false;
 			}
 		});
 		
