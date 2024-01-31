@@ -1,5 +1,6 @@
 package pl.robotix.cinx.api.binance;
 
+import static java.math.MathContext.DECIMAL64;
 import static java.util.stream.Collectors.toCollection;
 import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
@@ -41,6 +42,8 @@ public class BinanceApi implements SyncApi {
 	private static final String USDT_BTC_SYMBOL = pairString(USDT_BTC);
 	
 	private static final HashMap<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<TimeRange, TimeRngInterval>();
+	
+	private static final BigDecimal TWO = BigDecimal.valueOf(2);
 	
 	private SpotClient client;
 	
@@ -108,11 +111,11 @@ public class BinanceApi implements SyncApi {
 		Function<Kline, Point> pointCreator;
 		if (pair.isReverse()) {
 			pointCreator = (kline) -> new Point(kline.getCloseTime(),
-					1.0 / kline.getClosePrice().doubleValue());
+					1.0 / avgPrice(kline));
 			pair = pair.reverse();
 		} else {
 			pointCreator = (kline) -> new Point(kline.getCloseTime(),
-					kline.getClosePrice().doubleValue());
+					avgPrice(kline));
 		}
 		
 		var params = emptyParams();
@@ -247,6 +250,10 @@ public class BinanceApi implements SyncApi {
 	
 	private static String formatDouble(BigDecimal value) {
 		return String.format(Locale.ROOT, "%.8f", value);
+	}
+	
+	private double avgPrice(Kline kline) {
+		return kline.getLowPrice().add(kline.getHighPrice()).divide(TWO, DECIMAL64).doubleValue();
 	}
 
 	private static enum TimeRngInterval {
