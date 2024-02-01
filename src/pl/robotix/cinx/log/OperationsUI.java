@@ -29,6 +29,9 @@ public class OperationsUI extends Canvas {
 	
 	private static final int BIAS_CALIBRATION_PX = 5;
 	
+	private static final Color BUY_COLOR = Color.LIGHTSKYBLUE.deriveColor(0, 1, 1, 0.5);
+	private static final Color SELL_COLOR = Color.ORANGERED.deriveColor(0, 1, 1, 0.5);
+	
 	private ObjectProperty<TimeRange> range = new SimpleObjectProperty<>();
 	
 	private ObjectProperty<Bounds> drawBounds = new SimpleObjectProperty<Bounds>(new BoundingBox(0, 0, 0, 0));
@@ -52,8 +55,8 @@ public class OperationsUI extends Canvas {
 		
 		Pane chartContent = (Pane) chart.getChildrenUnmodifiable().get(1);
 		Group plotArea = (Group) chartContent.getChildrenUnmodifiable().get(1);
-//		xAxis = (TimeAxis) chartContent.getChildrenUnmodifiable().get(2);
-//		yAxis = (NumberAxis) chartContent.getChildrenUnmodifiable().get(3);
+		xAxis = (TimeAxis) chartContent.getChildrenUnmodifiable().get(2);
+		yAxis = (NumberAxis) chartContent.getChildrenUnmodifiable().get(3);
 
 		plotArea.boundsInLocalProperty().addListener((property, oldVal, newVal) -> {
 			drawBounds.set(new BoundingBox(
@@ -73,8 +76,9 @@ public class OperationsUI extends Canvas {
 			if (Math.abs(op.percentChange) >= 1.0) {
 
 				Data<LocalDateTime, Number> lastData = data.get(0);
+				var operationTime = fromEpochSeconds(op.operationTime.getEpochSecond());
 				for (Data<LocalDateTime, Number> d: data) {
-					if (d.getXValue().isBefore(fromEpochSeconds(op.operationTime.getEpochSecond()))) {
+					if (d.getXValue().isBefore(operationTime)) {
 						lastData = d;
 					} else {
 						break;
@@ -86,7 +90,7 @@ public class OperationsUI extends Canvas {
 								drawBounds.get().getMinX() + xAxis.getDisplayPosition(lastData.getXValue()),
 								drawBounds.get().getMinY() + yAxis.getDisplayPosition(lastData.getYValue())),
 						Math.abs(op.percentChange * 2),
-						op.type == Type.BUY ? Color.LIGHTSKYBLUE : Color.ORANGERED));
+						op.type == Type.BUY ? BUY_COLOR : SELL_COLOR));
 			}
 		}
 		redraw();
@@ -152,17 +156,17 @@ public class OperationsUI extends Canvas {
 		}
 
 		public void draw(GraphicsContext gc) {
-//			Paint oldStroke = gc.getStroke();
+			Paint oldStroke = gc.getStroke();
 			Paint oldFill = gc.getFill();
 
-//			gc.setStroke(color);
+			gc.setStroke(color.darker());
 			gc.setFill(color);
 			gc.fillOval(center.getX() - diameter / 2, center.getY() - diameter / 2,
 					diameter, diameter);
 			gc.strokeOval(center.getX() - diameter / 2 - 1, center.getY() - diameter / 2 - 1,
 					diameter + 2, diameter + 2);
 
-//			gc.setStroke(oldStroke);
+			gc.setStroke(oldStroke);
 			gc.setFill(oldFill);
 		}
 		

@@ -75,16 +75,17 @@ public class Graph extends VBox {
 		});
 		
 		highlightCurrency.addListener((observable, oldValue, newValue) -> {
-			if ((newValue == null && oldValue != null)
-					|| newValue != null && !newValue.equals(oldValue)) {
+			if (newValue != null && !newValue.equals(oldValue)) {
 				
-				thick(oldValue, newValue);
+				mark(oldValue, newValue);
 
-				var history = pricesHistory.displayedCurrencies.get(newValue);
+				this.history.drawHistoryFor(seriesFor(newValue).getData(), newValue);
+
+				var hist = pricesHistory.displayedCurrencies.get(newValue);
 				ObservableArrayList<Data<LocalDateTime,Number>> volumeAvgData = new ObservableArrayList<>();
 				double maxVolume = 0;
 				double avg = 0;
-				for (Point pt : history) {
+				for (Point pt : hist) {
 					avg = (avg * 2 + pt.volume) / 3;
 					if (maxVolume < avg) {
 						maxVolume = avg;
@@ -166,15 +167,20 @@ public class Graph extends VBox {
 		return null;
 	}
 	
-	private void thick(Currency thin, Currency thick) {
-		series.forEach((s) -> {
-			if (thin != null && s.getName().equals(thin.symbol)) {
-				normal(s);
+	private Series<LocalDateTime,Number> seriesFor(Currency c) {
+		for (Series<LocalDateTime, Number> s : series) {
+			if (s.getName().equals(c.symbol)) {
+				return s;
 			}
-			if (thick != null && s.getName().equals(thick.symbol)) {
-				thick(s);
-			}
-		});
+		}
+		throw new IndexOutOfBoundsException("Currency "+c+" not found in series.");
+	}
+	
+	private void mark(Currency thin, Currency thick) {
+		if (thin != null) {
+			normal(seriesFor(thin));
+		}
+		thick(seriesFor(thick));
 	}
 	
 	private void normal(Series<LocalDateTime,Number> s) {
