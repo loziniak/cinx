@@ -4,6 +4,8 @@ import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +43,7 @@ public class App extends Application {
 	
 	private static final String CONFIG_FILE = "./app.properties";
 	private static final String LOG_FILE = "./operation.log";
+	private static final String CSS_FILE = "style.css";
 
 //	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
 //	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
@@ -142,7 +145,9 @@ public class App extends Application {
 		TabPane tabs = new TabPane();
 		tabs.getTabs().addAll(analyze, trade);
 
-		stage.setScene(new Scene(tabs));
+		var scene = new Scene(tabs);
+		scene.getStylesheets().add(AppStarter.class.getResource(CSS_FILE).toExternalForm());
+		stage.setScene(scene);
 		stage.show();
 	}
 
@@ -189,6 +194,10 @@ public class App extends Application {
 	}
 	
 	
+	public static LocalDateTime fromEpochSeconds(long epochSeconds) {
+		return LocalDateTime.ofEpochSecond(epochSeconds, 0, ZoneOffset.UTC);
+	}
+
 	public static void main(String[] args) {
 		launch(args);
 	}

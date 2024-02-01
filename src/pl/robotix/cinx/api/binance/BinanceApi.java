@@ -112,11 +112,11 @@ public class BinanceApi implements SyncApi {
 		Function<Kline, Point> pointCreator;
 		if (pair.isReverse()) {
 			pointCreator = (kline) -> new Point(kline.getCloseTime(),
-					1.0 / avgPrice(kline));
+					1.0 / avgPrice(kline), kline.getVolume().doubleValue());
 			pair = pair.reverse();
 		} else {
 			pointCreator = (kline) -> new Point(kline.getCloseTime(),
-					avgPrice(kline));
+					avgPrice(kline), kline.getVolume().doubleValue());
 		}
 		
 		var params = emptyParams();

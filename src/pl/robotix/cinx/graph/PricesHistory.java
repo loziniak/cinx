@@ -1,18 +1,13 @@
 package pl.robotix.cinx.graph;
 
-import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static pl.robotix.cinx.App.fromEpochSeconds;
 import static pl.robotix.cinx.Currency.WALLET;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -22,7 +17,6 @@ import java.util.function.Consumer;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
@@ -85,7 +79,7 @@ public class PricesHistory {
 				for (int i=0; i<currencies.length; i++) {
 					var percent = wc.get(currencies[i]).doubleValue();
 					var history = displayedCurrencies.get(currencies[i]);
-					var price = history.get(history.size() - 1).value;
+					var price = history.get(history.size() - 1).price;
 					amounts[i] = percent / price / 100;
 					histories[i] = history;
 					if (history.size() < minHistSize) {
@@ -98,9 +92,9 @@ public class PricesHistory {
 						double walletValue = 0.0;
 						for (int i=0; i<currencies.length; i++) {
 							
-							walletValue += histories[i].get(j).value * amounts[i];
+							walletValue += histories[i].get(j).price * amounts[i];
 						}
-						walletHistory.add(new Point(histories[0].get(j).date, walletValue));
+						walletHistory.add(new Point(histories[0].get(j).date, walletValue, 0.0));
 					}
 				}
 				displayedCurrencies.put(WALLET, walletHistory);			
@@ -111,17 +105,17 @@ public class PricesHistory {
 
 	public void retrieveUSDPriceHistory(Currency currency, Consumer<List<Point>> callback) {
 		
-		Task<List<List<Point>>> compositeTask = new Task<List<List<Point>>>() {
+		Task<List<History>> compositeTask = new Task<List<History>>() {
 
 			@Override
-			protected List<List<Point>> call() throws Exception {
+			protected List<History> call() throws Exception {
 				List<Pair> pairs = App.prices.pairsToComputeBTCFor(currency);
-				List<List<Point>> histories = new CopyOnWriteArrayList<>();
+				List<History> histories = new CopyOnWriteArrayList<>();
 				CountDownLatch latch = new CountDownLatch(pairs.size());
 				pairs.forEach((intermediatePair) -> {
 					api.retrievePriceHistory(intermediatePair, timeRange.get(), 
 							(history) -> {
-						histories.add(history);
+						histories.add(new History(intermediatePair, history));
 						latch.countDown();
 					});
 				});
@@ -132,7 +126,7 @@ public class PricesHistory {
 			@Override
 			protected void succeeded() {
 				
-				List<List<Point>> histories = null;
+				List<History> histories = null;
 				try {
 					histories = get();
 				} catch (InterruptedException | ExecutionException e) {
@@ -142,16 +136,26 @@ public class PricesHistory {
 				ArrayList<Point> usdPriceHistory = initWithOnes(timeRange.getValue());
 				histories.forEach((intermediateHistory) -> {
 
-					var ihCount = min(intermediateHistory.size(), usdPriceHistory.size());
+					var ihCount = min(intermediateHistory.points.size(), usdPriceHistory.size());
 					var ihSmallerBy = usdPriceHistory.size() - ihCount;
+					boolean isVolumeSignificant = intermediateHistory.pair.base.equals(currency);
 
+					Point usd, interm;
 					for (int i = usdPriceHistory.size() - 1; i >= ihSmallerBy; i--) {
-						usdPriceHistory.get(i).value *= intermediateHistory.get(i - ihSmallerBy).value;
+						usd = usdPriceHistory.get(i);
+						interm = intermediateHistory.points.get(i - ihSmallerBy);
+
+						usd.price *= interm.price;
+						if (isVolumeSignificant) {
+							usd.volume = interm.volume;
+						}
 					}
-					double firstKnownPrice = intermediateHistory.get(0).value;
+
+					double firstKnownPrice = intermediateHistory.points.get(0).price;
 					for (int i = ihSmallerBy - 1; i >= 0; i--) {
-						usdPriceHistory.get(i).value *= firstKnownPrice;
+						usdPriceHistory.get(i).price *= firstKnownPrice;
 					}
+					
 				});
 				
 				callback.accept(usdPriceHistory);
@@ -167,14 +171,22 @@ public class PricesHistory {
 		for (int i=0; i < range.getPointsCount(); i++) {
 			usdPriceHistory.add(new Point(
 				fromEpochSeconds(start + i * range.densitySeconds),
-				1.0)
+				1.0, 0.0)
 			);
 		}
 		return usdPriceHistory;
 	}
 	
-	public static LocalDateTime fromEpochSeconds(long epochSeconds) {
-		return LocalDateTime.ofEpochSecond(epochSeconds, 0, ZoneOffset.UTC);
+	private static class History {
+		Pair pair;
+		List<Point> points;
+
+		public History(Pair pair, List<Point> points) {
+			super();
+			this.pair = pair;
+			this.points = points;
+		}
+
 	}
 	
 }

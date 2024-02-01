@@ -10,6 +10,8 @@ import java.util.List;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart.Data;
@@ -28,6 +30,8 @@ import pl.robotix.cinx.log.OperationsUI;
 public class Graph extends VBox {
 	
 	private ObservableArrayList<Series<LocalDateTime,Number>> series = new ObservableArrayList<>();
+	private ObservableArrayList<Series<LocalDateTime,Number>> volume = new ObservableArrayList<>();
+
 	private TimeAxis dates;
 	
 	OperationsUI history;
@@ -44,19 +48,18 @@ public class Graph extends VBox {
 		dates = new TimeAxis(
 				LocalDateTime.now().minusDays(20),
 				LocalDateTime.now().minusDays(0));
-		NumberAxis percents = new NumberAxis(-100, 100, 25);
-		percents.setAutoRanging(true);
-		LineChart<LocalDateTime, Number> chart = new LineChart<>(dates, percents);
-		chart.setAnimated(false);
-		chart.setCreateSymbols(false);
-		chart.setData(series);
+		
+		AreaChart<LocalDateTime, Number> volumeChart = volumeChart();
+		
+		LineChart<LocalDateTime, Number> priceChart = priceChart();
 		
 		
 		StackPane chartWithHistory = new StackPane();
 		setVgrow(chartWithHistory, Priority.ALWAYS);
-		chartWithHistory.getChildren().add(chart);
+		chartWithHistory.getChildren().add(volumeChart);
+		chartWithHistory.getChildren().add(priceChart);
 
-		history = new OperationsUI(chart, operationLog);
+		history = new OperationsUI(priceChart, operationLog);
 		chartWithHistory.getChildren().add(history);
 		history.getRangeProperty().bind(pricesHistory.timeRange);
 
@@ -76,16 +79,63 @@ public class Graph extends VBox {
 					|| newValue != null && !newValue.equals(oldValue)) {
 				
 				thick(oldValue, newValue);
+
+				var history = pricesHistory.displayedCurrencies.get(newValue);
+				ObservableArrayList<Data<LocalDateTime,Number>> volumeAvgData = new ObservableArrayList<>();
+				double maxVolume = 0;
+				double avg = 0;
+				for (Point pt : history) {
+					avg = (avg * 2 + pt.volume) / 3;
+					if (maxVolume < avg) {
+						maxVolume = avg;
+					}
+					volumeAvgData.add(new Data<>(pt.date, - avg));
+				}
+				volume.clear();
+				volume.add(new Series<LocalDateTime, Number>(volumeAvgData));
+				NumberAxis yAxis = (NumberAxis) volume.get(0).getChart().getYAxis();
+				yAxis.setUpperBound(0.0);
+				yAxis.setLowerBound(- maxVolume * 5);
+				yAxis.setTickUnit(maxVolume / 4);
 			}
 		});
 	}
 
-	public void display(List<Point> prices, Currency currency) {
+	private LineChart<LocalDateTime, Number> priceChart() {
+		NumberAxis percents = new NumberAxis(-100, 100, 25);
+		percents.setAutoRanging(true);
+		percents.setPrefWidth(40);
+		LineChart<LocalDateTime, Number> priceChart = new LineChart<>(dates, percents);
+		priceChart.setAnimated(false);
+		priceChart.setCreateSymbols(false);
+		priceChart.setData(series);
+		return priceChart;
+	}
+
+	private AreaChart<LocalDateTime, Number> volumeChart() {
+		NumberAxis volumes = new NumberAxis(0, 0, 12.5);
+		volumes.setTickLabelsVisible(false);
+		volumes.setTickMarkVisible(false);
+		volumes.setMinorTickVisible(false);
+		AreaChart<LocalDateTime, Number> volumeChart = new AreaChart<>(dates, volumes);
+		volumeChart.setAnimated(false);
+		volumeChart.setCreateSymbols(false);
+		volumeChart.setData(volume);
+		volumeChart.setLegendVisible(false);
+		volumeChart.setHorizontalGridLinesVisible(false);
+		volumeChart.setHorizontalZeroLineVisible(false);
+		volumeChart.setVerticalGridLinesVisible(false);
+		volumeChart.setVerticalZeroLineVisible(false);
+		volumeChart.setPadding(new Insets(5, 4, 50, 42));
+		return volumeChart;
+	}
+
+	private void display(List<Point> prices, Currency currency) {
 		
 		Point last = prices.get(prices.size() - 1);
 		
 		ObservableArrayList<Data<LocalDateTime,Number>> percents = new ObservableArrayList<>();
-		prices.forEach((pt) -> percents.add(new Data<>(pt.date, (pt.value / last.value - 1) * 100)));
+		prices.forEach((pt) -> percents.add(new Data<>(pt.date, (pt.price / last.price - 1) * 100)));
 		
 		dates.newRange(prices.get(0).date, last.date);
 		
@@ -100,7 +150,7 @@ public class Graph extends VBox {
 		normal(s);
 	}
 	
-	public Series<LocalDateTime, Number> remove(Currency currency) {
+	private Series<LocalDateTime, Number> remove(Currency currency) {
 		Iterator<Series<LocalDateTime, Number>> i = series.iterator();
 		int index = -1;
 		boolean found = false;

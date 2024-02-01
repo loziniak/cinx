@@ -89,10 +89,16 @@ public class PoloniexApi implements SyncApi {
 	public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
         Function<PoloniexChartData, Point> pointCreator;
         if (pair.isReverse()) {
-        	pointCreator = (point) -> new Point(point.date.toLocalDateTime() , 1.0 / point.weightedAverage.doubleValue());
+        	pointCreator = (point) -> new Point(
+        			point.date.toLocalDateTime(),
+        			1.0 / point.weightedAverage.doubleValue(),
+        			point.volume.doubleValue());
         	pair = pair.reverse();
         } else {
-        	pointCreator = (point) -> new Point(point.date.toLocalDateTime() , point.weightedAverage.doubleValue());
+        	pointCreator = (point) -> new Point(
+        			point.date.toLocalDateTime(),
+        			point.weightedAverage.doubleValue(),
+        			point.volume.doubleValue());
         }
         
         return service.returnChartData(pairString(pair), range.densitySeconds, range.getStart())

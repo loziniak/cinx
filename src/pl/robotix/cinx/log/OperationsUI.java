@@ -1,6 +1,6 @@
 package pl.robotix.cinx.log;
 
-import static pl.robotix.cinx.graph.PricesHistory.fromEpochSeconds;
+import static pl.robotix.cinx.App.fromEpochSeconds;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,8 +52,8 @@ public class OperationsUI extends Canvas {
 		
 		Pane chartContent = (Pane) chart.getChildrenUnmodifiable().get(1);
 		Group plotArea = (Group) chartContent.getChildrenUnmodifiable().get(1);
-		xAxis = (TimeAxis) chartContent.getChildrenUnmodifiable().get(2);
-		yAxis = (NumberAxis) chartContent.getChildrenUnmodifiable().get(3);
+//		xAxis = (TimeAxis) chartContent.getChildrenUnmodifiable().get(2);
+//		yAxis = (NumberAxis) chartContent.getChildrenUnmodifiable().get(3);
 
 		plotArea.boundsInLocalProperty().addListener((property, oldVal, newVal) -> {
 			drawBounds.set(new BoundingBox(

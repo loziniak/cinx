@@ -13,15 +13,19 @@ public class Kline {
 	private BigDecimal closePrice;
 	private BigDecimal lowPrice;
 	private BigDecimal highPrice;
+	private BigDecimal volume;
 
 	public Kline(Object a) {
+		@SuppressWarnings("unchecked")
 		var arr = (ArrayList<Object>) a;
+
 		closeTime = ZonedDateTime.ofInstant(
 				ofEpochMilli((Long) arr.get(Indexes.CLOSE_TIME.index)),
 				UTC);
 		closePrice = new BigDecimal((String) arr.get(Indexes.CLOSE_PRICE.index));
 		lowPrice = new BigDecimal((String) arr.get(Indexes.LOW_PRICE.index));
 		highPrice = new BigDecimal((String) arr.get(Indexes.HIGH_PRICE.index));
+		volume = new BigDecimal((String) arr.get(Indexes.VOLUME.index));
 	}
 	
 	public ZonedDateTime getCloseTime() {
@@ -39,12 +43,17 @@ public class Kline {
 	public BigDecimal getHighPrice() {
 		return highPrice;
 	}
+	
+	public BigDecimal getVolume() {
+		return volume;
+	}
 
 	private static enum Indexes {
 		CLOSE_TIME(6),
 		HIGH_PRICE(2),
 		LOW_PRICE(3),
-		CLOSE_PRICE(4);
+		CLOSE_PRICE(4),
+		VOLUME(5);
 		
 		private int index;
 		
