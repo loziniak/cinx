@@ -74,30 +74,15 @@ public class Graph extends VBox {
 			}
 		});
 		
-		highlightCurrency.addListener((observable, oldValue, newValue) -> {
-			if (newValue != null && !newValue.equals(oldValue)) {
+		highlightCurrency.addListener((observable, oldCurrency, newCurrency) -> {
+			if (newCurrency != null && !newCurrency.equals(oldCurrency)) {
 				
-				mark(oldValue, newValue);
+				var oldSeries = seriesFor(oldCurrency);
+				var newSeries = seriesFor(newCurrency);
 
-				this.history.drawHistoryFor(seriesFor(newValue).getData(), newValue);
-
-				var hist = pricesHistory.displayedCurrencies.get(newValue);
-				ObservableArrayList<Data<LocalDateTime,Number>> volumeAvgData = new ObservableArrayList<>();
-				double maxVolume = 0;
-				double avg = 0;
-				for (Point pt : hist) {
-					avg = (avg * 2 + pt.volume) / 3;
-					if (maxVolume < avg) {
-						maxVolume = avg;
-					}
-					volumeAvgData.add(new Data<>(pt.date, - avg));
-				}
-				volume.clear();
-				volume.add(new Series<LocalDateTime, Number>(volumeAvgData));
-				NumberAxis yAxis = (NumberAxis) volume.get(0).getChart().getYAxis();
-				yAxis.setUpperBound(0.0);
-				yAxis.setLowerBound(- maxVolume * 5);
-				yAxis.setTickUnit(maxVolume / 4);
+				mark(oldSeries, newSeries);
+				this.history.drawHistoryFor(newSeries.getData(), newCurrency);
+				displayVolume(newCurrency, pricesHistory);
 			}
 		});
 	}
@@ -130,7 +115,7 @@ public class Graph extends VBox {
 		volumeChart.setPadding(new Insets(5, 4, 50, 42));
 		return volumeChart;
 	}
-
+	
 	private void display(List<Point> prices, Currency currency) {
 		
 		Point last = prices.get(prices.size() - 1);
@@ -151,6 +136,26 @@ public class Graph extends VBox {
 		normal(s);
 	}
 	
+	private void displayVolume(Currency newValue, final PricesHistory pricesHistory) {
+		var hist = pricesHistory.displayedCurrencies.get(newValue);
+		ObservableArrayList<Data<LocalDateTime,Number>> volumeAvgData = new ObservableArrayList<>();
+		double maxVolume = 0;
+		double avg = 0;
+		for (Point pt : hist) {
+			avg = (avg * 2 + pt.volume) / 3;
+			if (maxVolume < avg) {
+				maxVolume = avg;
+			}
+			volumeAvgData.add(new Data<>(pt.date, - avg));
+		}
+		volume.clear();
+		volume.add(new Series<LocalDateTime, Number>(volumeAvgData));
+		NumberAxis yAxis = (NumberAxis) volume.get(0).getChart().getYAxis();
+		yAxis.setUpperBound(0.0);
+		yAxis.setLowerBound(- maxVolume * 5);
+		yAxis.setTickUnit(maxVolume / 4);
+	}
+
 	private Series<LocalDateTime, Number> remove(Currency currency) {
 		Iterator<Series<LocalDateTime, Number>> i = series.iterator();
 		int index = -1;
@@ -176,14 +181,17 @@ public class Graph extends VBox {
 		throw new IndexOutOfBoundsException("Currency "+c+" not found in series.");
 	}
 	
-	private void mark(Currency thin, Currency thick) {
+	private void mark(Series<LocalDateTime, Number> thin, Series<LocalDateTime, Number> thick) {
 		if (thin != null) {
-			normal(seriesFor(thin));
+			normal(thin);
 		}
-		thick(seriesFor(thick));
+		
+		thick(thick);
+		series.remove(thick);
+		series.add(thick);
 	}
 	
-	private void normal(Series<LocalDateTime,Number> s) {
+	private void normal(Series<LocalDateTime, Number> s) {
 		if (s.getName().equals(WALLET.symbol)) {
 			width(s, 4);
 		} else {
@@ -191,11 +199,11 @@ public class Graph extends VBox {
 		}
 	}
 	
-	private void thick(Series<LocalDateTime,Number> s) {
+	private void thick(Series<LocalDateTime, Number> s) {
 		width(s, 3);
 	}
 	
-	private void width(Series<LocalDateTime,Number> s, int width) {
+	private void width(Series<LocalDateTime, Number> s, int width) {
 		s.nodeProperty().get().setStyle("-fx-stroke-width: "+width+"px;");
 	}
 
