@@ -33,6 +33,7 @@ import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
+import pl.robotix.cinx.api.OperationException;
 import pl.robotix.cinx.api.SyncApi;
 import pl.robotix.cinx.trade.Operation;
 
@@ -98,13 +99,13 @@ public class BinanceApi implements SyncApi {
 	}
 
 	@Override
-	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
-		return marketOrder(pair, amount, Operation.Type.BUY);
+	public void buy(Pair pair, BigDecimal rate, BigDecimal amount) throws OperationException {
+		marketOrder(pair, amount, Operation.Type.BUY);
 	}
 
 	@Override
-	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
-		return marketOrder(pair, amount, Operation.Type.SELL);
+	public void sell(Pair pair, BigDecimal rate, BigDecimal amount) throws OperationException {
+		marketOrder(pair, amount, Operation.Type.SELL);
 	}
 
 	@Override
@@ -146,19 +147,6 @@ public class BinanceApi implements SyncApi {
 				.collect(Collectors.toSet());
 		symbols.add(pairString(USDT_BTC));
 
-//		// Retrieve each symbol separately.
-//		// Good for debug in case of "Invalid symbol" response:
-//		var symbolsParam = new ArrayList<String>();
-//		symbols.forEach((s) -> {
-//			System.out.println("retrievePrices: "+s);
-//			symbolsParam.clear();
-//			symbolsParam.add(s);
-//			params.put("symbols", symbolsParam);
-//			params.put("type", "MINI");
-//			var json = client.createMarket().ticker24H(params);
-//			System.out.println(json);
-//		});
-		
 		params.put("symbols", new ArrayList<String>(symbols));
 		params.put("type", "MINI");
 		var json = client.createMarket().ticker24H(params);
@@ -209,7 +197,7 @@ public class BinanceApi implements SyncApi {
 		return new Account(json);
 	}
 	
-	private boolean marketOrder(Pair pair, BigDecimal baseAmount, Operation.Type operation) {
+	private void marketOrder(Pair pair, BigDecimal baseAmount, Operation.Type operation) throws OperationException {
 		var params = emptyParams();
 		params.put("symbol", pairString(pair));
 		params.put("side", operation.name());
@@ -224,10 +212,12 @@ public class BinanceApi implements SyncApi {
 		try {
 			String response = client.createTrade().newOrder(params);
 			String status = new JSONObject(response).getString("status");
-			return status.equals("FILLED");
+			if (!status.equals("FILLED")) {
+				throw new OperationException("Unexpected response status: "+status);
+			}
 		} catch (BinanceClientException e) {
 			System.err.println(pair.toString() + " " + operation + " client error: " +  e.getMessage());
-			return false;
+			throw new OperationException(e.getErrMsg());
 		}
 	}
 	

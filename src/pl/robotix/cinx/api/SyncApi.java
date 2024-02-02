@@ -9,9 +9,9 @@ import pl.robotix.cinx.TimeRange;
 
 public interface SyncApi extends Api {
 
-	boolean buy(Pair pair, BigDecimal rate, BigDecimal amount);
+	void buy(Pair pair, BigDecimal rate, BigDecimal amount) throws OperationException;
 
-	boolean sell(Pair pair, BigDecimal rate, BigDecimal amount);
+	void sell(Pair pair, BigDecimal rate, BigDecimal amount) throws OperationException;
 
 	List<Point> retrievePriceHistory(Pair pair, TimeRange range);
 

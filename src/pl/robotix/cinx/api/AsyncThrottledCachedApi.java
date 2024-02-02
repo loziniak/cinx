@@ -81,13 +81,17 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 	}
 	
 	@Override
-	public void buy(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<Boolean> callback) {
-		asyncRunRecursive(() -> api.buy(pair, rate, amount), callback, 0, false);
+	public void buy(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<OperationException> callback) {
+		asyncRunRecursive(() -> AsyncApi.handleException(
+				() -> { api.buy(pair, rate, amount); return null; }
+			), callback, 0, false);
 	}
 	
 	@Override
-	public void sell(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<Boolean> callback) {
-		asyncRunRecursive(() -> api.sell(pair, rate, amount), callback, 0, false);
+	public void sell(Pair pair, BigDecimal rate, BigDecimal amount, final Consumer<OperationException> callback) {
+		asyncRunRecursive(() -> AsyncApi.handleException(
+				() -> { api.sell(pair, rate, amount); return null; }
+			), callback, 0, false);
 	}
 
 	@Override

@@ -1,5 +1,8 @@
 package pl.robotix.cinx.api;
 
+import static pl.robotix.cinx.trade.Operation.Type.BUY;
+import static pl.robotix.cinx.trade.Operation.Type.SELL;
+
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
@@ -29,13 +32,19 @@ public class SyncApiWrapper implements AsyncApi {
 	public void close() {}
 
 	@Override
-	public void buy(Pair pair, BigDecimal rate, BigDecimal amount, Consumer<Boolean> callback) {
-		callback.accept(api.buy(pair, rate, amount));
+	public void buy(Pair pair, BigDecimal rate, BigDecimal amount, Consumer<OperationException> callback) {
+		callback.accept(AsyncApi.handleException(
+				() -> { api.buy(pair, rate, amount); return null; }
+			)
+		);
 	}
 
 	@Override
-	public void sell(Pair pair, BigDecimal rate, BigDecimal amount, Consumer<Boolean> callback) {
-		callback.accept(api.sell(pair, rate, amount));
+	public void sell(Pair pair, BigDecimal rate, BigDecimal amount, Consumer<OperationException> callback) {
+		callback.accept(AsyncApi.handleException(
+				() -> { api.sell(pair, rate, amount); return null; }
+			)
+		);
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
+import pl.robotix.cinx.api.OperationException;
 import pl.robotix.cinx.api.SyncApi;
 
 public class PoloniexApi implements SyncApi {
@@ -59,7 +60,7 @@ public class PoloniexApi implements SyncApi {
 	}
 	
 	@Override
-	public boolean buy(Pair pair, BigDecimal rate, BigDecimal amount) {
+	public void buy(Pair pair, BigDecimal rate, BigDecimal amount) throws OperationException {
 		PoloniexOrderResult res = service.buy(pairString(pair), rate, amount, true, false, false);
 
 		for (int i = 0; i < NONCE_ERROR_RETRY_COUNT; i++) {
@@ -68,11 +69,13 @@ public class PoloniexApi implements SyncApi {
 		                    res = service.buy(pairString(pair), rate, amount, true, false, false);
 			}
 		}
-		return res.error == null;
+		if (res.error != null) {
+			throw new OperationException(res.error);
+		}
 	}
 
 	@Override
-	public boolean sell(Pair pair, BigDecimal rate, BigDecimal amount) {
+	public void sell(Pair pair, BigDecimal rate, BigDecimal amount) throws OperationException {
 		PoloniexOrderResult res = service.sell(pairString(pair), rate, amount, true, false, false);
 
 		for (int i = 0; i < NONCE_ERROR_RETRY_COUNT; i++) {
@@ -81,7 +84,9 @@ public class PoloniexApi implements SyncApi {
 		                    res = service.sell(pairString(pair), rate, amount, true, false, false);
 			}
 		}
-		return res.error == null;
+		if (res.error != null) {
+			throw new OperationException(res.error);
+		}
 	}
 
 

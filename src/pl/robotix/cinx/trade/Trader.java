@@ -135,8 +135,10 @@ public class Trader {
 	public void executeOperations(AsyncApi api) {
 		for (Entry<Currency, Double> entry: wallet.getPercentChanges().entrySet()) {
 			double percent = entry.getValue();
-			operationLog.log(entry.getKey(), percent, percentToUsd(percent),
-					percent < 0 ? SELL : BUY);
+			if (abs(percent) > 0.1) {
+				operationLog.log(entry.getKey(), percent, percentToUsd(percent),
+						percent < 0 ? SELL : BUY);
+			}
 		}
 		operations.forEach((operation) -> {
 			if (operation == null) {
@@ -145,20 +147,20 @@ public class Trader {
 			
 			switch (operation.type) {
 			case BUY:
-				api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount, (buySuccess) -> {
-					if (buySuccess) {
-						log.info("finished buy: "+operation.pair);
+				api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount, (exception) -> {
+					if (exception != null) {
+						log.error("ERROR buying "+operation.pair+": "+exception.getMessage());
 					} else {
-						log.error("ERROR buying "+operation.pair);
+						log.info("finished buy: "+operation.pair);
 					}
 				});
 				break;
 			case SELL:
-				api.sell(operation.pair, operation.rate.multiply(SELL_RATE_MOD), operation.amount, (sellSuccess)-> {
-					if (sellSuccess) {
-						log.info("finished sell: "+operation.pair);
+				api.sell(operation.pair, operation.rate.multiply(SELL_RATE_MOD), operation.amount, (exception)-> {
+					if (exception != null) {
+						log.error("ERROR selling "+operation.pair+": "+exception.getMessage());
 					} else {
-						log.error("ERROR selling "+operation.pair);
+						log.info("finished sell: "+operation.pair);
 					}
 				});
 				break;
