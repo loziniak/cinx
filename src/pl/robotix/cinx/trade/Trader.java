@@ -149,7 +149,7 @@ public class Trader {
 					if (buySuccess) {
 						log.info("finished buy: "+operation.pair);
 					} else {
-						log.info("ERROR buying "+operation.pair);
+						log.error("ERROR buying "+operation.pair);
 					}
 				});
 				break;
@@ -158,7 +158,7 @@ public class Trader {
 					if (sellSuccess) {
 						log.info("finished sell: "+operation.pair);
 					} else {
-						log.info("ERROR selling "+operation.pair);
+						log.error("ERROR selling "+operation.pair);
 					}
 				});
 				break;

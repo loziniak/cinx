@@ -109,6 +109,7 @@ public class OperationsUI extends Canvas {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private void drawCalibration(GraphicsContext gc) {
 		gc.setFill(Color.RED);
 		gc.fillRect(drawBounds.get().getMinX(),      drawBounds.get().getMinY(),      10, 10);
