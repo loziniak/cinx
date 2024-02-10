@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Logger;
@@ -133,18 +132,14 @@ public class Trader {
 	}
 	
 	public void executeOperations(AsyncApi api) {
-		for (Entry<Currency, Double> entry: wallet.getPercentChanges().entrySet()) {
-			double percent = entry.getValue();
-			if (abs(percent) > 0.1) {
-				operationLog.log(entry.getKey(), percent, percentToUsd(percent),
-						percent < 0 ? SELL : BUY);
-			}
-		}
+		var percents = wallet.getPercentChanges();
 		operations.forEach((operation) -> {
 			if (operation == null) {
 				return;
 			}
 			
+			var base = operation.pair.base;
+			var percent = percents.get(base);
 			switch (operation.type) {
 			case BUY:
 				api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount, (exception) -> {
@@ -152,6 +147,7 @@ public class Trader {
 						log.error("ERROR buying "+operation.pair+": "+exception.getMessage());
 					} else {
 						log.info("finished buy: "+operation.pair);
+						operationLog.log(base, percent, percentToUsd(percent), BUY);
 					}
 				});
 				break;
@@ -161,6 +157,7 @@ public class Trader {
 						log.error("ERROR selling "+operation.pair+": "+exception.getMessage());
 					} else {
 						log.info("finished sell: "+operation.pair);
+						operationLog.log(base, percent, percentToUsd(percent), SELL);
 					}
 				});
 				break;

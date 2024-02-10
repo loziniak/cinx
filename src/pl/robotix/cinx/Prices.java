@@ -32,7 +32,7 @@ public class Prices {
 	
 	public Prices(AsyncApi api) {
 		this.api = api;
-		retrieveFor(api.pairsForMarket(BTC));
+		retrieveFor(api.pairsForMarket(BTC)); // TODO: trade with USDT, not BTC. bigger volumes.
 	}
 
 	public Prices(Map<Pair, BigDecimal> prices, Map<Pair, BigDecimal> pairVolumes) {
@@ -98,7 +98,7 @@ public class Prices {
 	public void retrieveFor(Collection<Currency> currencies) {
 		System.out.println("retrieveFor...");
 		var pairs = currencies.stream()
-				.map((cur) -> new Pair(BTC, cur)) // TODO: !!!!
+				.map((cur) -> new Pair(BTC, cur)) // TODO: trade with USDT, not BTC. bigger volumes.
 				.collect(Collectors.toList());
 		
 		retrieveMissing(pairs);
