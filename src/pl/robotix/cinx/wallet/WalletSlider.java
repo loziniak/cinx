@@ -76,6 +76,25 @@ public class WalletSlider extends VBox {
 		setOnMouseEntered((event) -> {
 			highlightCurrency.set(currency);
 		});
+		
+		setOnScroll(event -> {
+			slider.valueChangingProperty().set(true);
+
+			double percent = event.getDeltaY() / event.getMultiplierY();
+
+			if (event.isControlDown()) {
+				percent *= 0.1;
+			}
+
+			double current = entry.percent.doubleValue();
+			if (- percent > current) { percent = - current; }
+			else if (current + percent > 100.0) { percent = 100 - current; } 
+			System.out.println("scroll " + percent + " " + current + " " + slider.valueProperty().doubleValue());
+
+			slider.valueProperty().set(current + percent);
+
+			slider.valueChangingProperty().set(false);
+		});
 	}
 	
 	public void freeze(boolean freeze) {

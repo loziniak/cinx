@@ -104,7 +104,7 @@ public class App extends Application {
 	
 	private Set<Currency> random(Config config) {
 		int count = config.getRandomCurrenciesCount();
-		double fromFirst = 0.95;
+		double fromFirst = 0.97;
 		
 		var banned = new HashSet<Currency>(config.getBannedCurrencies());
 		var curs = api.pairsForMarket(BTC); // TODO: trade with USDT, not BTC. bigger volumes.
@@ -118,8 +118,11 @@ public class App extends Application {
 		if (currencyList.size() > count) {
 			currencyList.sort(prices.byVolume());
 			while (random.size() < count) {
+				double position = Math.random();
+				position = position * position * position; // make currencies on top of list to appear more frequently
+				position = 1.0 - fromFirst + (fromFirst * position);
 				Currency c = currencyList.get(
-						Double.valueOf(Math.random() * currencyList.size() * fromFirst).intValue()
+						Double.valueOf(position * currencyList.size()).intValue()
 					);
 				if (!banned.contains(c)) {
 					random.add(c);
