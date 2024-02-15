@@ -178,7 +178,7 @@ public class Graph extends VBox {
 				return s;
 			}
 		}
-		throw new IndexOutOfBoundsException("Currency "+c+" not found in series.");
+		return null;
 	}
 	
 	private void mark(Series<LocalDateTime, Number> thin, Series<LocalDateTime, Number> thick) {
@@ -186,9 +186,11 @@ public class Graph extends VBox {
 			normal(thin);
 		}
 		
-		thick(thick);
-		series.remove(thick);
-		series.add(thick);
+		if (thick != null) {
+			thick(thick);
+			series.remove(thick);
+			series.add(thick);
+		}
 	}
 	
 	private void normal(Series<LocalDateTime, Number> s) {

@@ -109,7 +109,12 @@ public class PricesHistory {
 
 			@Override
 			protected List<History> call() throws Exception {
-				List<Pair> pairs = App.prices.pairsToComputeBTCFor(currency);
+				List<Pair> pairs;
+				if (currency.equals(Currency.BTC)) {
+					pairs = App.prices.pairsToComputeUSDFor(currency);
+				} else {
+					pairs = App.prices.pairsToComputeBTCFor(currency);
+				}
 				List<History> histories = new CopyOnWriteArrayList<>();
 				CountDownLatch latch = new CountDownLatch(pairs.size());
 				pairs.forEach((intermediatePair) -> {
