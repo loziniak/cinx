@@ -10,8 +10,10 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.TimeRange;
@@ -22,6 +24,8 @@ public class OperationLog {
 	private PrintStream printer;
 	
 	private List<LoggedOperation> pastOperations = new ArrayList<>();
+	
+	private Set<Currency> alreadyLogged = new HashSet<>();
 
 	public OperationLog(String file) throws IOException {
 		File logFile = new File(file);
@@ -77,10 +81,17 @@ public class OperationLog {
 
 		s.close();
 	}
+	
+	public void initSession() {
+		alreadyLogged.clear();
+	}
 
 	public void log(Currency currency, double percent, BigDecimal usdPrice, Operation.Type type) {
-		printer.println(new LoggedOperation(Instant.now(), currency, type, percent));
-		printer.flush();
+		if (!alreadyLogged.contains(currency)) {
+			printer.println(new LoggedOperation(Instant.now(), currency, type, percent));
+			printer.flush();
+			alreadyLogged.add(currency);
+		}
 	}
 
 	public void close() {

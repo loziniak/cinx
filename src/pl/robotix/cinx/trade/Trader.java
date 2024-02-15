@@ -133,6 +133,7 @@ public class Trader {
 	
 	public void executeOperations(AsyncApi api) {
 		var percents = wallet.getPercentChanges();
+		operationLog.initSession();
 		operations.forEach((operation) -> {
 			if (operation == null) {
 				return;
