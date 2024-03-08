@@ -7,6 +7,7 @@ import java.util.Map;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Prices;
+import pl.robotix.cinx.TimeRange;
 
 public interface Api {
 	
@@ -18,10 +19,12 @@ public interface Api {
 
 	Prices retrievePrices(Collection<Pair> pairs);
 	
-	Collection<Currency> pairsForMarket(Currency c);
+	Collection<Pair> pairsForMarket(Currency c);
 	
 	boolean isExchangeable(Currency c);
 	
 	double takerFee();
+	
+	TimeValues timeValues(TimeRange range, Currency currency);
 
 }

@@ -73,13 +73,13 @@ public class TimeAxis extends MyAxis<LocalDateTime> {
 	private TimeRange getTimeRange() {
 		long secondsDifference = getLower().until(getUpper(), ChronoUnit.SECONDS);
 
-		if (secondsDifference > TimeRange.DAY.periodSeconds / 2 && secondsDifference <= TimeRange.WEEK.periodSeconds / 2) {
+		if (secondsDifference > TimeRange.DAY.seconds / 2 && secondsDifference <= TimeRange.WEEK.seconds / 2) {
 			return TimeRange.DAY;
-		} else if (secondsDifference > TimeRange.WEEK.periodSeconds / 2 && secondsDifference <= TimeRange.MONTH.periodSeconds / 2) {
+		} else if (secondsDifference > TimeRange.WEEK.seconds / 2 && secondsDifference <= TimeRange.MONTH.seconds / 2) {
 			return TimeRange.WEEK;
-		} else if (secondsDifference > TimeRange.MONTH.periodSeconds / 2 && secondsDifference <= TimeRange.YEAR.periodSeconds / 2) {
+		} else if (secondsDifference > TimeRange.MONTH.seconds / 2 && secondsDifference <= TimeRange.YEAR.seconds / 2) {
 			return TimeRange.MONTH;
-		} else if (secondsDifference > TimeRange.YEAR.periodSeconds / 2) {
+		} else if (secondsDifference > TimeRange.YEAR.seconds / 2) {
 			return TimeRange.YEAR;
 		}
 		

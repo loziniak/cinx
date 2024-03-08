@@ -3,7 +3,6 @@ package pl.robotix.cinx.api;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,33 +16,31 @@ import java.util.function.Supplier;
 import javafx.concurrent.Task;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
-import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
+import pl.robotix.cinx.graph.PricesHistory.History;
 
 public class AsyncThrottledCachedApi implements AsyncApi {
 	
-	private static final long POLONIEX_MIN_OPERATION_DELAY_MS = 100;
 	private static final long THROTTLE_QUEUES_COUNT = 2; // sync and async
 	private static final long THROTTLE_SAFETY_MARGIN_MS = 100;
-	
-	private static final long THROTTLE_MS = 
-			POLONIEX_MIN_OPERATION_DELAY_MS * THROTTLE_QUEUES_COUNT + THROTTLE_SAFETY_MARGIN_MS;
 	
 	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(5);
 
 	private SyncApi api;
 	private long timeoutMs;
 	private int maxRetries;
+	private int delayMs;
 
 	private Map<String, Object> cache = new ConcurrentHashMap<>();
 	private AtomicLong lastOpMillis;
 	private AtomicLong lastOpScheduledMillis;
 
-	public AsyncThrottledCachedApi(SyncApi api, long timeoutMs, int maxRetries) {
+	public AsyncThrottledCachedApi(SyncApi api, long timeoutMs, int maxRetries, int delayMs) {
 		this.api = api;
 		this.timeoutMs = timeoutMs;
 		this.maxRetries = maxRetries;
+		this.delayMs = delayMs;
 		lastOpMillis = new AtomicLong(System.currentTimeMillis());
 		lastOpScheduledMillis = new AtomicLong(System.currentTimeMillis());
 	}
@@ -95,14 +92,14 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 	}
 
 	@Override
-	public void retrievePriceHistory(Pair pair, TimeRange range, final Consumer<List<Point>> callback) {
+	public void retrievePriceHistory(Pair pair, TimeRange range, final Consumer<History> callback) {
 		asyncCache(() -> api.retrievePriceHistory(pair, range), 
 				"retrievePriceHistory_" + pair + "_" + range,
 				callback, true);
 	}
 	
 	@Override
-	public Collection<Currency> pairsForMarket(Currency c) {
+	public Collection<Pair> pairsForMarket(Currency c) {
 		return api.pairsForMarket(c);
 	}
 	
@@ -114,6 +111,11 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 	@Override
 	public double takerFee() {
 		return api.takerFee();
+	}
+	
+	@Override
+	public TimeValues timeValues(TimeRange range, Currency currency) {
+		return api.timeValues(range, currency);
 	}
 	
 	
@@ -171,7 +173,7 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 			
 		};
 		
-		long asyncWaitMs = THROTTLE_MS - (System.currentTimeMillis() - lastOpScheduledMillis.get());
+		long asyncWaitMs = throttleMs() - (System.currentTimeMillis() - lastOpScheduledMillis.get());
 		if (asyncWaitMs < 0) {
 			asyncWaitMs = 0;
 		}
@@ -185,13 +187,17 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 
 	private void syncThrottleControl() {
 		try {
-			long waitMs = THROTTLE_MS - (System.currentTimeMillis() - lastOpMillis.get());
+			long waitMs = throttleMs() - (System.currentTimeMillis() - lastOpMillis.get());
 			if (waitMs > 0) {
 				Thread.sleep(waitMs);
 			}
 		} catch (InterruptedException e) {
 		}
 		lastOpMillis.set(System.currentTimeMillis());
+	}
+	
+	private long throttleMs() {
+		return delayMs * THROTTLE_QUEUES_COUNT + THROTTLE_SAFETY_MARGIN_MS;
 	}
 	
 	private <R> R syncCache(Supplier<R> operation, String key) {

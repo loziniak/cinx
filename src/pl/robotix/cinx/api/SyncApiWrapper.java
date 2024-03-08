@@ -1,19 +1,15 @@
 package pl.robotix.cinx.api;
 
-import static pl.robotix.cinx.trade.Operation.Type.BUY;
-import static pl.robotix.cinx.trade.Operation.Type.SELL;
-
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
-import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
+import pl.robotix.cinx.graph.PricesHistory.History;
 
 public class SyncApiWrapper implements AsyncApi {
 
@@ -48,7 +44,7 @@ public class SyncApiWrapper implements AsyncApi {
 	}
 
 	@Override
-	public void retrievePriceHistory(Pair pair, TimeRange range, Consumer<List<Point>> callback) {
+	public void retrievePriceHistory(Pair pair, TimeRange range, Consumer<History> callback) {
 		callback.accept(api.retrievePriceHistory(pair, range));
 	}
 
@@ -68,7 +64,7 @@ public class SyncApiWrapper implements AsyncApi {
 	}
 
 	@Override
-	public Collection<Currency> pairsForMarket(Currency c) {
+	public Collection<Pair> pairsForMarket(Currency c) {
 		return api.pairsForMarket(c);
 	}
 
@@ -80,6 +76,11 @@ public class SyncApiWrapper implements AsyncApi {
 	@Override
 	public double takerFee() {
 		return api.takerFee();
+	}
+	
+	@Override
+	public TimeValues timeValues(TimeRange range, Currency c) {
+		return api.timeValues(range, c);
 	}
 
 }

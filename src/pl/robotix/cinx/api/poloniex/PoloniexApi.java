@@ -1,11 +1,14 @@
 package pl.robotix.cinx.api.poloniex;
 
 import static java.util.stream.Collectors.toList;
+import static pl.robotix.cinx.TimeRange.DAY;
+import static pl.robotix.cinx.TimeRange.MONTH;
+import static pl.robotix.cinx.TimeRange.WEEK;
+import static pl.robotix.cinx.TimeRange.YEAR;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -22,12 +25,16 @@ import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
 import pl.robotix.cinx.api.OperationException;
 import pl.robotix.cinx.api.SyncApi;
+import pl.robotix.cinx.api.TimeValues;
+import pl.robotix.cinx.graph.PricesHistory.History;
 
 public class PoloniexApi implements SyncApi {
 	
 	private static final int NONCE_ERROR_RETRY_COUNT = 2; 
 
 	private static final double TAKER_FEE = 0.0025;
+
+	private static final HashMap<TimeRange, TimeValues> TIME_VALUES = new HashMap<>();
 
 	private PoloniexExchangeService service;
 
@@ -38,11 +45,10 @@ public class PoloniexApi implements SyncApi {
 	
 	@Override
 	public void initTimeRanges() {
-		TimeRange.init(
-				5 * 60, // DAY -> 5 minutes
-				30 * 60, // WEEK -> 30 min
-				4 * 60 * 60, // MONTH -> 4h
-				24 * 60 * 60); // YEAR -> 1d
+		TIME_VALUES.put(DAY, new TimeValues(DAY.seconds,          5 * 60)); // DAY -> 5 minutes
+		TIME_VALUES.put(WEEK, new TimeValues(WEEK.seconds,       30 * 60)); // WEEK -> 30 min
+		TIME_VALUES.put(MONTH, new TimeValues(MONTH.seconds, 4 * 60 * 60)); // MONTH -> 4h
+		TIME_VALUES.put(YEAR, new TimeValues(YEAR.seconds,  24 * 60 * 60)); // YEAR -> 1d
 	}
 
 	@Override
@@ -91,7 +97,8 @@ public class PoloniexApi implements SyncApi {
 
 
     @Override
-	public List<Point> retrievePriceHistory(Pair pair, TimeRange range) {
+	public History retrievePriceHistory(Pair pair, TimeRange range) {
+    	var time = timeValues(range, pair.base);
         Function<PoloniexChartData, Point> pointCreator;
         if (pair.isReverse()) {
         	pointCreator = (point) -> new Point(
@@ -106,10 +113,11 @@ public class PoloniexApi implements SyncApi {
         			point.volume.doubleValue());
         }
         
-        return service.returnChartData(pairString(pair), range.densitySeconds, range.getStart())
-        .stream()
-        .map(pointCreator)
-        .collect(toList());
+        var ret = service.returnChartData(pairString(pair), time.densitySeconds, time.getStart())
+	        .stream()
+	        .map(pointCreator)
+	        .collect(toList());
+        return new History(pair, ret, false, timeValues(range, null));
     }
     
 	@Override
@@ -131,7 +139,7 @@ public class PoloniexApi implements SyncApi {
 	}
 	
 	@Override
-	public Collection<Currency> pairsForMarket(Currency c) {
+	public Collection<Pair> pairsForMarket(Currency c) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 	
@@ -143,6 +151,11 @@ public class PoloniexApi implements SyncApi {
 	@Override
 	public double takerFee() {
 		return TAKER_FEE;
+	}
+	
+	@Override
+	public TimeValues timeValues(TimeRange range, Currency currency) {
+		return TIME_VALUES.get(range);
 	}
 
 

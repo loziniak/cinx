@@ -41,7 +41,7 @@ public class OperationLog {
 	
 	public List<LoggedOperation> pastOperationsFor(Currency c, TimeRange time) {
 		List<LoggedOperation> ret = new ArrayList<>();
-		Instant startFrom = Instant.now().minus(time.periodSeconds, SECONDS);
+		Instant startFrom = Instant.now().minus(time.seconds, SECONDS);
 		
 		for (int i=pastOperations.size() - 1; i >= 0; i--) {
 			LoggedOperation operation = pastOperations.get(i);

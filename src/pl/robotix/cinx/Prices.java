@@ -6,6 +6,7 @@ import static java.util.Collections.reverseOrder;
 import static java.util.Comparator.comparing;
 import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
+import static pl.robotix.cinx.Pair.USDT_BTC;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,10 +31,13 @@ public class Prices {
 	
 	private AsyncApi api;
 
-	
+	public Prices() {
+	}
+
 	public Prices(AsyncApi api) {
 		this.api = api;
-		retrieveFor(api.pairsForMarket(BTC)); // TODO: trade with USDT, not BTC. bigger volumes.
+		retrieveFor(api.pairsForMarket(BTC)
+				.stream().map(p -> p.base).collect(Collectors.toSet())); // TODO: trade with USDT, not BTC. bigger volumes.
 	}
 
 	public Prices(Map<Pair, BigDecimal> prices, Map<Pair, BigDecimal> pairVolumes) {
@@ -59,6 +64,7 @@ public class Prices {
 	}
 	
 	public BigDecimal getRate(Pair pair) {
+//		System.out.println("getRate: "+pair);
 		if (pair.base.equals(pair.quote)) {
 			return ONE;
 		}
@@ -73,6 +79,10 @@ public class Prices {
 			foundPrice = ONE.divide(foundReversePrice, MathContext.DECIMAL64);
 			prices.put(pair, foundPrice);
 			return foundPrice;
+		}
+		
+		if (pair.quote.equals(BTC)) {
+			return null;
 		}
 		
 		return getRate(new Pair(pair.quote, BTC)  ).multiply(  getRate(new Pair(BTC, pair.base)));
@@ -100,12 +110,52 @@ public class Prices {
 		var pairs = currencies.stream()
 				.map((cur) -> new Pair(BTC, cur)) // TODO: trade with USDT, not BTC. bigger volumes.
 				.collect(Collectors.toList());
+
+		pairs.add(USDT_BTC);
 		
 		retrieveMissing(pairs);
 	}
 	
+	public void switchQuotes(BigDecimal usdtBtc) {
+		HashMap<Pair, BigDecimal> newPrices = new HashMap<>();
+		for (Entry<Pair, BigDecimal> price : prices.entrySet()) {
+
+			if        (price.getKey().quote.equals(BTC)) {
+				newPrices.put(
+						new Pair(USDT, price.getKey().base),
+						price.getValue().divide(usdtBtc, MathContext.DECIMAL64));
+
+			} else if (price.getKey().quote.equals(USDT)) {
+				newPrices.put(
+						new Pair(BTC, price.getKey().base),
+						price.getValue().multiply(usdtBtc));
+				
+			} else {
+				newPrices.put(
+						price.getKey(),
+						price.getValue()
+					);
+			}
+		}
+		prices = newPrices;
+	}
+	
 	public Comparator<Currency> byVolume() {
 		return reverseOrder(comparing((Currency c) -> { return volumes.get(c); }));
+	}
+	
+	public void join(Prices other) {
+		this.prices.putAll(other.prices);
+		this.volumes.putAll(other.volumes);
+		
+		for (Map.Entry<Pair, BigDecimal> entry : other.prices.entrySet()) {
+			Pair pair = entry.getKey();
+
+			if (!pair.quote.equals(BTC)) { // TODO: trade with USDT, not BTC. bigger volumes.
+				Pair toBtc = new Pair(BTC, pair.base);
+				prices.put(toBtc, getRate(toBtc));
+			}
+		}
 	}
 	
 	public void setApi(AsyncApi api) {
@@ -164,10 +214,7 @@ public class Prices {
 		toRet.removeIf((p) -> p.base.equals(p.quote));
 
 		if (!toRet.isEmpty()) {
-			Prices otherPrices = api.retrievePrices(toRet);
-	
-			this.prices.putAll(otherPrices.prices);
-			this.volumes.putAll(otherPrices.volumes);
+			join(api.retrievePrices(toRet));
 		}
 	}
 

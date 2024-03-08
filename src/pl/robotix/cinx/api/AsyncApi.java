@@ -1,13 +1,12 @@
 package pl.robotix.cinx.api;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import pl.robotix.cinx.Pair;
-import pl.robotix.cinx.Point;
 import pl.robotix.cinx.TimeRange;
+import pl.robotix.cinx.graph.PricesHistory;
 
 public interface AsyncApi extends Api {
 
@@ -17,7 +16,7 @@ public interface AsyncApi extends Api {
 
 	void sell(Pair pair, BigDecimal rate, BigDecimal amount, Consumer<OperationException> callback);
 
-	void retrievePriceHistory(Pair pair, TimeRange range, Consumer<List<Point>> callback);
+	void retrievePriceHistory(Pair pair, TimeRange range, Consumer<PricesHistory.History> callback);
 	
 	public static OperationException handleException(Callable<Void> op) {
 		try {

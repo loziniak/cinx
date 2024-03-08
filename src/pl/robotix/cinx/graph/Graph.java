@@ -71,6 +71,7 @@ public class Graph extends VBox {
 				highlightCurrency.set(change.getKey());
 			} else if (change.wasRemoved()) {
 				remove(change.getKey());
+				highlightCurrency.setValue(WALLET);
 			}
 		});
 		
@@ -119,11 +120,13 @@ public class Graph extends VBox {
 	private void display(List<Point> prices, Currency currency) {
 		
 		Point last = prices.get(prices.size() - 1);
+		Point first = prices.get(0);
 		
 		ObservableArrayList<Data<LocalDateTime,Number>> percents = new ObservableArrayList<>();
 		prices.forEach((pt) -> percents.add(new Data<>(pt.date, (pt.price / last.price - 1) * 100)));
 		
-		dates.newRange(prices.get(0).date, last.date);
+		dates.newRange(first.date, last.date);
+//		System.out.println("display: "+currency+", "+prices.size()+", "+first.date+" - "+last.date);
 		
 		display(percents, currency);
 	}
@@ -173,9 +176,11 @@ public class Graph extends VBox {
 	}
 	
 	private Series<LocalDateTime,Number> seriesFor(Currency c) {
-		for (Series<LocalDateTime, Number> s : series) {
-			if (s.getName().equals(c.symbol)) {
-				return s;
+		if (c != null) {
+			for (Series<LocalDateTime, Number> s : series) {
+				if (s.getName().equals(c.symbol)) {
+					return s;
+				}
 			}
 		}
 		return null;

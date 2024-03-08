@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javafx.application.Application;
 import javafx.beans.property.ObjectProperty;
@@ -27,7 +28,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.AsyncApi;
 import pl.robotix.cinx.api.AsyncThrottledCachedApi;
+import pl.robotix.cinx.api.MultiApi;
+import pl.robotix.cinx.api.SyncApiWrapper;
 import pl.robotix.cinx.api.binance.BinanceApi;
+import pl.robotix.cinx.api.bitmart.BitMartApi;
 import pl.robotix.cinx.graph.Graph;
 import pl.robotix.cinx.graph.PricesHistory;
 import pl.robotix.cinx.log.OperationLog;
@@ -72,9 +76,14 @@ public class App extends Application {
 		
 		operationLog = new OperationLog(LOG_FILE);
 
-		api = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2);
+		var binanceApi = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2, 100);
+		var multi = new MultiApi(binanceApi);
+//		multi.addApi(new AsyncThrottledCachedApi(new BitMartApi(), 2000, 2, 200));
+		multi.addApi(new SyncApiWrapper(new BitMartApi()));
+		api = multi;
 //		api = new SyncApiWrapper(new BinanceApi(binanceApiKey, binanceSecret));
 		api.initTimeRanges();
+		
 		pricesHistory = new PricesHistory(api, chartCurrencies, walletCurrencies);
 
 		prices = new Prices(api);
@@ -87,7 +96,6 @@ public class App extends Application {
 		var subscribed = config.getSubscribedCurrencies();
 		subscribed.removeIf((c) -> !api.isExchangeable(c));
 		chartCurrencies.addAll(subscribed);
-//		chartCurrencies.removeAll(config.getBannedCurrencies());
 		chartCurrencies.addAll(random(config)); // retrieve api btc
 
 		chartCurrencies.addAll(wallet.getCurrencies());
@@ -108,7 +116,7 @@ public class App extends Application {
 		
 		var banned = new HashSet<Currency>(config.getBannedCurrencies());
 		var curs = api.pairsForMarket(BTC); // TODO: trade with USDT, not BTC. bigger volumes.
-		prices.retrieveFor(curs);
+		prices.retrieveFor(curs.stream().map(p -> p.base).collect(Collectors.toSet()));
 		
 		Set<Currency> currencySet = prices.getAllCurrencies();
 		currencySet.removeAll(chartCurrencies);

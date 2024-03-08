@@ -27,6 +27,7 @@ import pl.robotix.cinx.Pair;
 import pl.robotix.cinx.Point;
 import pl.robotix.cinx.TimeRange;
 import pl.robotix.cinx.api.AsyncApi;
+import pl.robotix.cinx.api.TimeValues;
 
 public class PricesHistory {
 	
@@ -120,7 +121,13 @@ public class PricesHistory {
 				pairs.forEach((intermediatePair) -> {
 					api.retrievePriceHistory(intermediatePair, timeRange.get(), 
 							(history) -> {
-						histories.add(new History(intermediatePair, history));
+//						System.out.println(intermediatePair.toString()
+//								+ " = " + history.points.size()
+//								+ " " + history.timeValues);
+						if (history.pair.base.equals(currency)) {
+							history.isVolumeSignificant = true;
+						}
+						histories.add(history);
 						latch.countDown();
 					});
 				});
@@ -138,39 +145,54 @@ public class PricesHistory {
 					throw new RuntimeException(e);
 				}
 				
-				ArrayList<Point> usdPriceHistory = initWithOnes(timeRange.getValue());
-				histories.forEach((intermediateHistory) -> {
-
-					var ihCount = min(intermediateHistory.points.size(), usdPriceHistory.size());
-					var ihSmallerBy = usdPriceHistory.size() - ihCount;
-					boolean isVolumeSignificant = intermediateHistory.pair.base.equals(currency);
-
-					Point usd, interm;
-					for (int i = usdPriceHistory.size() - 1; i >= ihSmallerBy; i--) {
-						usd = usdPriceHistory.get(i);
-						interm = intermediateHistory.points.get(i - ihSmallerBy);
-
-						usd.price *= interm.price;
-						if (isVolumeSignificant) {
-							usd.volume = interm.volume;
-						}
-					}
-
-					double firstKnownPrice = intermediateHistory.points.get(0).price;
-					for (int i = ihSmallerBy - 1; i >= 0; i--) {
-						usdPriceHistory.get(i).price *= firstKnownPrice;
-					}
-					
-				});
-				
-				callback.accept(usdPriceHistory);
+				ArrayList<Point> combined = combine(histories);
+//				System.out.println("combined: "+combined.size());
+				callback.accept(combined);
 			}
 		};
 		
 		new Thread(compositeTask).start();
 	}
 	
-	private static ArrayList<Point> initWithOnes(TimeRange range) {
+	public static ArrayList<Point> combine(List<History> histories) {
+		History longest = histories.get(0);
+		for (int i = 1; i < histories.size(); i++) {
+			History current = histories.get(i);
+			if (longest.timeValues.getPointsCount() < current.timeValues.getPointsCount()) {
+				longest = current;
+			}
+		}
+		final History theLongest = longest;
+		ArrayList<Point> accumPriceHistory = initWithOnes(longest.timeValues);
+		histories.forEach((intermediateHistory) -> {
+//			System.out.println("intermediate: "+intermediateHistory.pair+" "+intermediateHistory.isVolumeSignificant);
+			double rate = ((double) theLongest.timeValues.getPointsCount()) / intermediateHistory.timeValues.getPointsCount();
+
+			var ihCount = min((int) (intermediateHistory.points.size() * rate), accumPriceHistory.size());
+			var ihSmallerBy = accumPriceHistory.size() - ihCount;
+
+			Point accum, interm;
+			for (int i = accumPriceHistory.size() - 1; i >= ihSmallerBy; i--) {
+				accum = accumPriceHistory.get(i);
+				interm = intermediateHistory.points.get((int) ((i - ihSmallerBy) / rate));
+
+				accum.price *= interm.price;
+				if (intermediateHistory.isVolumeSignificant) {
+					accum.volume = interm.volume;
+				}
+			}
+
+			double firstKnownPrice = intermediateHistory.points.get(0).price;
+			for (int i = ihSmallerBy - 1; i >= 0; i--) {
+				accumPriceHistory.get(i).price *= firstKnownPrice;
+			}
+			
+		});
+		
+		return accumPriceHistory;
+	}
+	
+	private static ArrayList<Point> initWithOnes(TimeValues range) {
 		ArrayList<Point> usdPriceHistory = new ArrayList<>(100);
 		long start = range.getStart();
 		for (int i=0; i < range.getPointsCount(); i++) {
@@ -182,14 +204,23 @@ public class PricesHistory {
 		return usdPriceHistory;
 	}
 	
-	private static class History {
+	public static class History {
 		Pair pair;
 		List<Point> points;
+		public boolean isVolumeSignificant;
+		public TimeValues timeValues;
 
-		public History(Pair pair, List<Point> points) {
+		public History(Pair pair, List<Point> points, boolean isVolumeSignificant, TimeValues timeValues) {
 			super();
 			this.pair = pair;
 			this.points = points;
+			this.isVolumeSignificant = isVolumeSignificant;
+			this.timeValues = timeValues;
+		}
+		
+		@Override
+		public String toString() {
+			return pair.toString()+" "+points.size()+" "+isVolumeSignificant+" "+timeValues;
 		}
 
 	}

@@ -1,10 +1,17 @@
 package pl.robotix.cinx.api.binance;
 
 import static java.math.MathContext.DECIMAL64;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.teeing;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
 import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.Pair.USDT_BTC;
+import static pl.robotix.cinx.TimeRange.DAY;
+import static pl.robotix.cinx.TimeRange.MONTH;
+import static pl.robotix.cinx.TimeRange.WEEK;
+import static pl.robotix.cinx.TimeRange.YEAR;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,6 +20,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +43,8 @@ import pl.robotix.cinx.Prices;
 import pl.robotix.cinx.TimeRange;
 import pl.robotix.cinx.api.OperationException;
 import pl.robotix.cinx.api.SyncApi;
+import pl.robotix.cinx.api.TimeValues;
+import pl.robotix.cinx.graph.PricesHistory.History;
 import pl.robotix.cinx.trade.Operation;
 
 public class BinanceApi implements SyncApi {
@@ -43,7 +53,8 @@ public class BinanceApi implements SyncApi {
 	
 	private static final String USDT_BTC_SYMBOL = pairString(USDT_BTC);
 	
-	private static final HashMap<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<TimeRange, TimeRngInterval>();
+	private static final HashMap<TimeRange, TimeRngInterval> TIME_INTERVALS = new HashMap<>();
+	private static final HashMap<TimeRange, TimeValues> TIME_VALUES = new HashMap<>();
 	
 	private static final BigDecimal TWO = BigDecimal.valueOf(2);
 	
@@ -51,7 +62,7 @@ public class BinanceApi implements SyncApi {
 	
 	private ExchangeInfo exchange;
 
-	private Set<Currency> pairsForMarket;
+	private Set<Pair> pairsForMarket;
 
 	private Account account;
 
@@ -65,21 +76,22 @@ public class BinanceApi implements SyncApi {
 		account = accountInfo();
 		exchange = new ExchangeInfo(client.createMarket().exchangeInfo(emptyParams()));
 		pairsForMarket = pairsForMarket(MARKET_QUOTE);
-		pairsForMarket.add(MARKET_QUOTE);
+		pairsForMarket.add(new Pair(MARKET_QUOTE, MARKET_QUOTE));
 	}
 	
 	@Override
 	public void initTimeRanges() {
-		TimeRange.init(
-				TimeRngInterval._5m.seconds,
-				TimeRngInterval._30m.seconds,
-				TimeRngInterval._2h.seconds,
-				TimeRngInterval._1d.seconds);
+		TIME_INTERVALS.put(DAY, TimeRngInterval._5m);
+		TIME_VALUES.put(DAY, new TimeValues(DAY.seconds, TimeRngInterval._5m.seconds) );
 
-		TIME_INTERVALS.put(TimeRange.DAY, TimeRngInterval._5m);
-		TIME_INTERVALS.put(TimeRange.WEEK, TimeRngInterval._30m);
-		TIME_INTERVALS.put(TimeRange.MONTH, TimeRngInterval._2h);
-		TIME_INTERVALS.put(TimeRange.YEAR, TimeRngInterval._1d);
+		TIME_INTERVALS.put(WEEK, TimeRngInterval._30m);
+		TIME_VALUES.put(WEEK,  new TimeValues(WEEK.seconds, TimeRngInterval._30m.seconds));
+
+		TIME_INTERVALS.put(MONTH, TimeRngInterval._2h);
+		TIME_VALUES.put(MONTH,  new TimeValues(MONTH.seconds, TimeRngInterval._2h.seconds));
+
+		TIME_INTERVALS.put(YEAR, TimeRngInterval._1d);
+		TIME_VALUES.put(YEAR,  new TimeValues(YEAR.seconds, TimeRngInterval._1d.seconds));
 	}
 
 	@Override
@@ -90,7 +102,7 @@ public class BinanceApi implements SyncApi {
 				.forEach((bal) -> {
 			var cur = new Currency(bal.getAsset());
 			if (bal.getFree().signum() != 0 && isExchangeable(cur)) {
-				System.out.println("retrieveBalance: " + cur.symbol);
+//				System.out.println("retrieveBalance: " + cur.symbol);
 				balance.put(cur, bal.getFree());
 			}
 		});
@@ -109,8 +121,9 @@ public class BinanceApi implements SyncApi {
 	}
 
 	@Override
-	public ArrayList<Point> retrievePriceHistory(Pair pair, TimeRange range) {
+	public History retrievePriceHistory(Pair pair, TimeRange range) {
 		Function<Kline, Point> pointCreator;
+		Pair originalPair = pair;
 		if (pair.isReverse()) {
 			pointCreator = (kline) -> new Point(kline.getCloseTime(),
 					1.0 / avgPrice(kline), kline.getVolume().doubleValue());
@@ -122,16 +135,15 @@ public class BinanceApi implements SyncApi {
 		
 		var params = emptyParams();
 		params.put("symbol", pairString(pair));
-		params.put("interval", TIME_INTERVALS.get(range).paramVal());
-		params.put("limit", range.getPointsCount());
+		params.put("interval", TIME_INTERVALS.get(range).toParam());
+		params.put("limit", TIME_VALUES.get(range).getPointsCount());
 		var json = client.createMarket().klines(params);
 		var points = new JSONArray(json).toList().stream()
-				.map((obj) -> {
-					return pointCreator.apply(new Kline(obj));
-				})
+				.map(Kline::new)
+				.map(pointCreator)
 				.collect(toCollection(ArrayList::new));
 
-		return points;
+		return new History(originalPair, points, false, timeValues(range, null));
 	}
 
 	@Override
@@ -141,6 +153,10 @@ public class BinanceApi implements SyncApi {
 	
 	@Override
 	public Prices retrievePrices(Collection<Pair> pairs) {
+		if (pairs.isEmpty()) {
+			return new Prices();
+		}
+		
 		var params = emptyParams();
 		var symbols = pairs.stream()
 				.map((p) -> p.isReverse() ? pairString(p.reverse()) : pairString(p))
@@ -156,7 +172,7 @@ public class BinanceApi implements SyncApi {
 		Map<Pair, BigDecimal> volumes = new HashMap<>();
 		tickers.forEach((o) -> {
 			var ticker = new Ticker((JSONObject) o);
-			System.out.println("retrievePrices ticker: " + ticker.getSymbol());
+//			System.out.println("retrievePrices ticker: " + ticker.getSymbol());
 			try {
 				var pair = pair(ticker.getSymbol());
 				prices.put(pair, ticker.getLastPrice());
@@ -170,25 +186,39 @@ public class BinanceApi implements SyncApi {
 	}
 	
 	@Override
-	public Set<Currency> pairsForMarket(Currency c) {
+	public Set<Pair> pairsForMarket(Currency c) {
 		if (c.equals(MARKET_QUOTE) && pairsForMarket != null) {
 			return pairsForMarket;
 		}
 		return exchange.getSymbols().stream()
 				.filter((s) -> s.isSpot() && s.isMarket())
 				.filter((s) -> s.toPair().quote.equals(c))
-				.map((s) -> s.toPair().base)
-				.collect(Collectors.toSet());
+				.map((s) -> s.toPair())
+				.collect(teeing(
+						toSet(),
+						mapping(Pair::reverse, toSet()),
+						(straight, reversed) -> {
+							var ret = new HashSet<Pair>(straight);
+							ret.addAll(reversed);
+							return ret;
+						}
+					)
+				);
 	}
 
 	@Override
 	public boolean isExchangeable(Currency c) {
-		return c.equals(USDT) || c.equals(BTC) ||  pairsForMarket.contains(c);
+		return c.equals(USDT) || c.equals(BTC) ||  pairsForMarket.contains(new Pair(MARKET_QUOTE, c));
 	}
 
 	@Override
 	public double takerFee() {
 		return account.getTakerRate();
+	}
+	
+	@Override
+	public TimeValues timeValues(TimeRange range, Currency currency) {
+		return TIME_VALUES.get(range);
 	}
 
 	
@@ -252,9 +282,9 @@ public class BinanceApi implements SyncApi {
 	}
 
 	private static enum TimeRngInterval {
-		_5m(5 * 60),
-		_30m(30 * 60),
-		_2h(2 * 60 * 60),
+		_5m(      5 * 60),
+		_30m(    30 * 60),
+		_2h( 2 * 60 * 60),
 		_1d(24 * 60 * 60);
 		
 		private final long seconds;
@@ -263,7 +293,7 @@ public class BinanceApi implements SyncApi {
 			this.seconds = seconds;
 		}
 		
-		public String paramVal() {
+		public String toParam() {
 			return this.name().substring(1);
 		}
 	}
