@@ -89,7 +89,7 @@ public class WalletSlider extends VBox {
 			double current = entry.percent.doubleValue();
 			if (- percent > current) { percent = - current; }
 			else if (current + percent > 100.0) { percent = 100 - current; } 
-			System.out.println("scroll " + percent + " " + current + " " + slider.valueProperty().doubleValue());
+//			System.out.println("scroll " + percent + " " + current + " " + slider.valueProperty().doubleValue());
 
 			slider.valueProperty().set(current + percent);
 

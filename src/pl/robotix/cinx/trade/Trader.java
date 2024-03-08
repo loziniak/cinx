@@ -141,6 +141,7 @@ public class Trader {
 			
 			var base = operation.pair.base;
 			var percent = percents.get(base);
+
 			switch (operation.type) {
 			case BUY:
 				api.buy(operation.pair, operation.rate.multiply(BUY_RATE_MOD), operation.amount, (exception) -> {
@@ -148,7 +149,7 @@ public class Trader {
 						log.error("ERROR buying "+operation.pair+": "+exception.getMessage());
 					} else {
 						log.info("finished buy: "+operation.pair);
-						operationLog.log(base, percent, percentToUsd(percent), BUY);
+						operationLog.log(base, percent, percentToUsd(percent), operation.type);
 					}
 				});
 				break;
@@ -158,7 +159,7 @@ public class Trader {
 						log.error("ERROR selling "+operation.pair+": "+exception.getMessage());
 					} else {
 						log.info("finished sell: "+operation.pair);
-						operationLog.log(base, percent, percentToUsd(percent), SELL);
+						operationLog.log(base, percent, percentToUsd(percent), operation.type);
 					}
 				});
 				break;

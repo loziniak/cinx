@@ -60,7 +60,7 @@ public class WalletEntry {
 	
 	public void setPercent(double percent) {
 		if (percent > 99.0) percent = 100.0;
-		if (percent < 1.0) percent = 0.0;
+		if (percent < 0.5) percent = 0.0;
 		this.percent.setValue(percent);
 	}
 	
