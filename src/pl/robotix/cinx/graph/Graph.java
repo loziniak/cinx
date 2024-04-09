@@ -3,6 +3,8 @@ package pl.robotix.cinx.graph;
 import static javafx.collections.FXCollections.observableArrayList;
 import static pl.robotix.cinx.Currency.WALLET;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +22,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.ObservableArrayList;
 import pl.robotix.cinx.Point;
@@ -28,6 +31,31 @@ import pl.robotix.cinx.log.OperationLog;
 import pl.robotix.cinx.log.OperationsUI;
 
 public class Graph extends VBox {
+	
+	private static final NumberFormat WITH_PLUS = new DecimalFormat("+#;-#");
+	private static final String INFINITY = "+∞";
+
+	private static final StringConverter<Number> REVERTED = new StringConverter<Number>() {
+		@Override
+		public String toString(Number n1_) {
+			double n1 = n1_.doubleValue();
+			if (n1 == -100.0) {
+				return INFINITY;
+			}
+			double n2 = n1 / (n1 / 100.0 + 1.0);
+			return WITH_PLUS.format(Math.round(- n2));
+		}
+		
+		@Override
+		public Number fromString(String s2) {
+			if (INFINITY.equals(s2)) {
+				return -100.0;
+			}
+			double n2 = - Double.parseDouble(s2);
+			double n1 = n2 / (n2 / 100.0 + 1.0);
+			return n1;
+		}
+	};
 	
 	private ObservableArrayList<Series<LocalDateTime,Number>> series = new ObservableArrayList<>();
 	private ObservableArrayList<Series<LocalDateTime,Number>> volume = new ObservableArrayList<>();
@@ -92,6 +120,7 @@ public class Graph extends VBox {
 		NumberAxis percents = new NumberAxis(-100, 100, 25);
 		percents.setAutoRanging(true);
 		percents.setPrefWidth(40);
+		percents.tickLabelFormatterProperty().set(REVERTED);
 		LineChart<LocalDateTime, Number> priceChart = new LineChart<>(dates, percents);
 		priceChart.setAnimated(false);
 		priceChart.setCreateSymbols(false);
