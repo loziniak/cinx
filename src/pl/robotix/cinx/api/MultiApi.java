@@ -82,7 +82,7 @@ public class MultiApi implements AsyncApi {
 		} else {
 			Pair switched = switchQuote(pair);
 			api = specificApis.get(switched);
-			Pair quotes = new Pair(switched.quote, pair.quote);
+			Pair quotes = new Pair(pair.quote, switched.quote);
 			var quotesApi = specificApis.get(quotes);
 			if (api != null && quotesApi != null) {
 				
