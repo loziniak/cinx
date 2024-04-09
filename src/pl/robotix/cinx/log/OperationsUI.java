@@ -89,7 +89,7 @@ public class OperationsUI extends Canvas {
 						new Point2D(
 								drawBounds.get().getMinX() + xAxis.getDisplayPosition(lastData.getXValue()),
 								drawBounds.get().getMinY() + yAxis.getDisplayPosition(lastData.getYValue())),
-						Math.abs(op.percentChange * 2),
+						Math.abs(op.percentChange * 2) + 2,
 						op.type == Type.BUY ? BUY_COLOR : SELL_COLOR));
 			}
 		}
@@ -160,8 +160,9 @@ public class OperationsUI extends Canvas {
 			Paint oldStroke = gc.getStroke();
 			Paint oldFill = gc.getFill();
 
-			gc.setStroke(color.darker());
-			gc.setFill(color);
+			Color col = adjust(color, diameter);
+			gc.setStroke(col.darker());
+			gc.setFill(adjust(col, diameter));
 			gc.fillOval(center.getX() - diameter / 2, center.getY() - diameter / 2,
 					diameter, diameter);
 			gc.strokeOval(center.getX() - diameter / 2 - 1, center.getY() - diameter / 2 - 1,
@@ -169,6 +170,10 @@ public class OperationsUI extends Canvas {
 
 			gc.setStroke(oldStroke);
 			gc.setFill(oldFill);
+		}
+		
+		private Color adjust(Color c, double diameter) {
+			return new Color(c.getRed(), c.getGreen(), c.getBlue(), 1.0 / Math.pow(diameter, 0.3));
 		}
 		
 	}
