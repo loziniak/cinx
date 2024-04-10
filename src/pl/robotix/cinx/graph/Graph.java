@@ -19,7 +19,6 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart.Data;
 import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
@@ -83,7 +82,7 @@ public class Graph extends VBox {
 		
 		
 		StackPane chartWithHistory = new StackPane();
-		setVgrow(chartWithHistory, Priority.ALWAYS);
+		chartWithHistory.setPrefHeight(600);
 		chartWithHistory.getChildren().add(volumeChart);
 		chartWithHistory.getChildren().add(priceChart);
 

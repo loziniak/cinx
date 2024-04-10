@@ -21,9 +21,12 @@ import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import pl.robotix.cinx.api.AsyncApi;
@@ -159,28 +162,29 @@ public class App extends Application {
 		stage.show();
 	}
 
-	private VBox analyzeLayout(Tab trade) {
-		HBox top = new HBox();
-		top.getChildren().add(new Graph(pricesHistory, highlightCurrency, operationLog));
-		
+	private Pane analyzeLayout(Tab trade) {
 		WalletUI walletUI = new WalletUI(wallet, chartCurrencies, highlightCurrency);
 		walletUI.setPadding(new Insets(20));
 		walletUI.setSpacing(10);
 		
-		VBox topRight = new VBox(20);
-		topRight.getChildren().add(walletUI);
+		VBox bottomRight = new VBox(20);
 		
 		Button generateOperations = new Button("Generate operations");
 		generateOperations.setOnAction((event) -> {
 			trade.getTabPane().getSelectionModel().select(trade);
 			trader.generateOperations(api.takerFee());
 		});
-		topRight.getChildren().add(generateOperations);
-		top.getChildren().add(topRight);
+		bottomRight.getChildren().add(generateOperations);
+		bottomRight.getChildren().add(new CurrencySelector(wallet, chartCurrencies, highlightCurrency));
+
+		HBox bottom = new HBox();
+		bottom.getChildren().add(new Graph(pricesHistory, highlightCurrency, operationLog));
+		bottom.getChildren().add(bottomRight);
+		HBox.setHgrow(bottomRight, Priority.ALWAYS);
 
 		VBox outer = new VBox();
-		outer.getChildren().add(top);
-		outer.getChildren().add(new CurrencySelector(wallet, chartCurrencies, highlightCurrency));
+		outer.getChildren().add(new ScrollPane(walletUI));
+		outer.getChildren().add(bottom);
 		outer.setPadding(new Insets(10));
 		return outer;
 	}

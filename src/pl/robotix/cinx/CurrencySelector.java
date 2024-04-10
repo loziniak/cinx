@@ -13,6 +13,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener.Change;
+import javafx.geometry.Insets;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
@@ -61,7 +62,8 @@ public class CurrencySelector extends FlowPane {
 	private ToggleButton currencyButton(final Currency currency, Wallet wallet, ObservableSet<Currency> chartCurrencies, ObjectProperty<Currency> highlightCurrency) {
 		final ToggleButton button = new ToggleButton(currency.symbol);
 		button.setBorder(DEFAULT_BORDER);
-		
+		button.setPadding(new Insets(1, 1, 1, 1));
+
 		button.selectedProperty().addListener(new ChangeListener<Boolean>() {
 			private boolean bypass = false;
 
