@@ -73,7 +73,7 @@ public class OperationsUI extends Canvas {
 
 		for (LoggedOperation op: log.pastOperationsFor(c, range.get())) {
 
-			if (Math.abs(op.percentChange) >= 1.0) {
+			if (Math.abs(op.percentChange) >= 0.5) {
 
 				Data<LocalDateTime, Number> lastData = data.get(0);
 				var operationTime = fromEpochSeconds(op.operationTime.getEpochSecond());
