@@ -9,7 +9,7 @@ import static pl.robotix.cinx.Currency.BTC;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.Pair.USDT_BTC;
 import static pl.robotix.cinx.TimeRange.DAY;
-import static pl.robotix.cinx.TimeRange.MONTH;
+import static pl.robotix.cinx.TimeRange.TWO_MONTHS;
 import static pl.robotix.cinx.TimeRange.WEEK;
 import static pl.robotix.cinx.TimeRange.YEAR;
 
@@ -87,8 +87,8 @@ public class BinanceApi implements SyncApi {
 		TIME_INTERVALS.put(WEEK, TimeRngInterval._30m);
 		TIME_VALUES.put(WEEK,  new TimeValues(WEEK.seconds, TimeRngInterval._30m.seconds));
 
-		TIME_INTERVALS.put(MONTH, TimeRngInterval._2h);
-		TIME_VALUES.put(MONTH,  new TimeValues(MONTH.seconds, TimeRngInterval._2h.seconds));
+		TIME_INTERVALS.put(TWO_MONTHS, TimeRngInterval._4h);
+		TIME_VALUES.put(TWO_MONTHS,  new TimeValues(TWO_MONTHS.seconds, TimeRngInterval._4h.seconds));
 
 		TIME_INTERVALS.put(YEAR, TimeRngInterval._1d);
 		TIME_VALUES.put(YEAR,  new TimeValues(YEAR.seconds, TimeRngInterval._1d.seconds));
@@ -285,6 +285,7 @@ public class BinanceApi implements SyncApi {
 		_5m(      5 * 60),
 		_30m(    30 * 60),
 		_2h( 2 * 60 * 60),
+		_4h( 4 * 60 * 60),
 		_1d(24 * 60 * 60);
 		
 		private final long seconds;

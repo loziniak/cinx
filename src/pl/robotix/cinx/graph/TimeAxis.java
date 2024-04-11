@@ -55,9 +55,9 @@ public class TimeAxis extends MyAxis<LocalDateTime> {
 			for (; tick.isBefore(getUpper()); tick = tick.plusDays(1)) {
 				tickValues.add(tick);
 			}
-		} else if (timeRange == TimeRange.MONTH) {
-			LocalDateTime tick = getLower().plusDays(5).withHour(0);
-			for (; tick.isBefore(getUpper()); tick = tick.plusDays(5)) {
+		} else if (timeRange == TimeRange.TWO_MONTHS) {
+			LocalDateTime tick = getLower().plusDays(10).withHour(0);
+			for (; tick.isBefore(getUpper()); tick = tick.plusDays(10)) {
 				tickValues.add(tick);
 			}
 		} else if (timeRange == TimeRange.YEAR) {
@@ -75,10 +75,10 @@ public class TimeAxis extends MyAxis<LocalDateTime> {
 
 		if (secondsDifference > TimeRange.DAY.seconds / 2 && secondsDifference <= TimeRange.WEEK.seconds / 2) {
 			return TimeRange.DAY;
-		} else if (secondsDifference > TimeRange.WEEK.seconds / 2 && secondsDifference <= TimeRange.MONTH.seconds / 2) {
+		} else if (secondsDifference > TimeRange.WEEK.seconds / 2 && secondsDifference <= TimeRange.TWO_MONTHS.seconds / 2) {
 			return TimeRange.WEEK;
-		} else if (secondsDifference > TimeRange.MONTH.seconds / 2 && secondsDifference <= TimeRange.YEAR.seconds / 2) {
-			return TimeRange.MONTH;
+		} else if (secondsDifference > TimeRange.TWO_MONTHS.seconds / 2 && secondsDifference <= TimeRange.YEAR.seconds / 2) {
+			return TimeRange.TWO_MONTHS;
 		} else if (secondsDifference > TimeRange.YEAR.seconds / 2) {
 			return TimeRange.YEAR;
 		}

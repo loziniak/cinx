@@ -182,7 +182,7 @@ public class Prices {
 			return Arrays.asList(pair);
 		}
 		
-		List<Pair> intermediates = Arrays.asList(new Pair(quote, BTC), new Pair(BTC, base));
+		List<Pair> intermediates = Arrays.asList(new Pair(quote, BTC), new Pair(BTC, base)); // TODO: quote_currency
 		retrieveMissing(intermediates);
 		
 		return intermediates;

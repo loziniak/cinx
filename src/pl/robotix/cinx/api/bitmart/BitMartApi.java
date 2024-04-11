@@ -4,7 +4,7 @@ import static java.math.MathContext.DECIMAL64;
 import static java.util.stream.Collectors.toCollection;
 import static pl.robotix.cinx.Currency.USDT;
 import static pl.robotix.cinx.TimeRange.DAY;
-import static pl.robotix.cinx.TimeRange.MONTH;
+import static pl.robotix.cinx.TimeRange.TWO_MONTHS;
 import static pl.robotix.cinx.TimeRange.WEEK;
 import static pl.robotix.cinx.TimeRange.YEAR;
 
@@ -65,12 +65,12 @@ public class BitMartApi implements SyncApi {
 	public void initTimeRanges() {
 		STEP_MINUTES.put(DAY, 15L);
 		STEP_MINUTES.put(WEEK, 60L);
-		STEP_MINUTES.put(MONTH, 240L);
+		STEP_MINUTES.put(TWO_MONTHS, 240L);
 		STEP_MINUTES.put(YEAR, 10080L);
 		
 		TIME_VALUES.put(DAY, new TimeValues(DAY.seconds, STEP_MINUTES.get(DAY) * 60));
 		TIME_VALUES.put(WEEK, new TimeValues(WEEK.seconds, STEP_MINUTES.get(WEEK) * 60));
-		TIME_VALUES.put(MONTH, new TimeValues(MONTH.seconds, STEP_MINUTES.get(MONTH) * 60));
+		TIME_VALUES.put(TWO_MONTHS, new TimeValues(TWO_MONTHS.seconds, STEP_MINUTES.get(TWO_MONTHS) * 60));
 		TIME_VALUES.put(YEAR, new TimeValues(YEAR.seconds, STEP_MINUTES.get(YEAR) * 60));
 	}
 

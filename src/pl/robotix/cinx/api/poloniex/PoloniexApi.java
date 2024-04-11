@@ -2,7 +2,7 @@ package pl.robotix.cinx.api.poloniex;
 
 import static java.util.stream.Collectors.toList;
 import static pl.robotix.cinx.TimeRange.DAY;
-import static pl.robotix.cinx.TimeRange.MONTH;
+import static pl.robotix.cinx.TimeRange.TWO_MONTHS;
 import static pl.robotix.cinx.TimeRange.WEEK;
 import static pl.robotix.cinx.TimeRange.YEAR;
 
@@ -45,10 +45,10 @@ public class PoloniexApi implements SyncApi {
 	
 	@Override
 	public void initTimeRanges() {
-		TIME_VALUES.put(DAY, new TimeValues(DAY.seconds,          5 * 60)); // DAY -> 5 minutes
-		TIME_VALUES.put(WEEK, new TimeValues(WEEK.seconds,       30 * 60)); // WEEK -> 30 min
-		TIME_VALUES.put(MONTH, new TimeValues(MONTH.seconds, 4 * 60 * 60)); // MONTH -> 4h
-		TIME_VALUES.put(YEAR, new TimeValues(YEAR.seconds,  24 * 60 * 60)); // YEAR -> 1d
+		TIME_VALUES.put(DAY, new TimeValues(DAY.seconds,                    5 * 60)); // DAY -> 5 minutes
+		TIME_VALUES.put(WEEK, new TimeValues(WEEK.seconds,                 30 * 60)); // WEEK -> 30 min
+		TIME_VALUES.put(TWO_MONTHS, new TimeValues(TWO_MONTHS.seconds, 4 * 60 * 60)); // TWO_MONTHS -> 4h
+		TIME_VALUES.put(YEAR, new TimeValues(YEAR.seconds,            24 * 60 * 60)); // YEAR -> 1d
 	}
 
 	@Override

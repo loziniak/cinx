@@ -31,7 +31,7 @@ import pl.robotix.cinx.api.TimeValues;
 
 public class PricesHistory {
 	
-	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.WEEK);
+	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.YEAR);
 	
 	final ObservableMap<Currency, List<Point>> displayedCurrencies = FXCollections.observableHashMap();
 	
