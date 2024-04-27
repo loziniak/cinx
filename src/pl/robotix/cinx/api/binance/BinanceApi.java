@@ -62,7 +62,7 @@ public class BinanceApi implements SyncApi {
 	
 	private ExchangeInfo exchange;
 
-	private Set<Pair> pairsForMarket;
+	private Map<Currency, Set<Pair>>  pairsForMarket;
 
 	private Account account;
 
@@ -75,8 +75,10 @@ public class BinanceApi implements SyncApi {
 		
 		account = accountInfo();
 		exchange = new ExchangeInfo(client.createMarket().exchangeInfo(emptyParams()));
-		pairsForMarket = pairsForMarket(MARKET_QUOTE);
-		pairsForMarket.add(new Pair(MARKET_QUOTE, MARKET_QUOTE));
+
+		var pfm = pairsForMarket(MARKET_QUOTE);
+		pfm.add(new Pair(MARKET_QUOTE, MARKET_QUOTE));
+		pairsForMarket.put(MARKET_QUOTE, pfm);
 	}
 	
 	@Override
@@ -187,28 +189,32 @@ public class BinanceApi implements SyncApi {
 	
 	@Override
 	public Set<Pair> pairsForMarket(Currency c) {
-		if (c.equals(MARKET_QUOTE) && pairsForMarket != null) {
-			return pairsForMarket;
+		var pfm = pairsForMarket.get(c);
+		if (pfm != null) {
+			return pfm;
 		}
-		return exchange.getSymbols().stream()
-				.filter((s) -> s.isSpot() && s.isMarket())
-				.filter((s) -> s.toPair().quote.equals(c))
-				.map((s) -> s.toPair())
-				.collect(teeing(
+		pfm = exchange.getSymbols().stream()
+			.filter((s) -> s.isMarket())
+//				.filter((s) -> s.isSpot() && s.isMarket())
+			.filter((s) -> s.toPair().quote.equals(c))
+			.map((s) -> s.toPair())
+			.collect(teeing(
 						toSet(),
 						mapping(Pair::reverse, toSet()),
 						(straight, reversed) -> {
 							var ret = new HashSet<Pair>(straight);
 							ret.addAll(reversed);
 							return ret;
-						}
-					)
-				);
+					}
+				)
+			);
+		pairsForMarket.put(c, pfm);
+		return pfm;
 	}
 
 	@Override
 	public boolean isExchangeable(Currency c) {
-		return c.equals(USDT) || c.equals(BTC) ||  pairsForMarket.contains(new Pair(MARKET_QUOTE, c));
+		return c.equals(USDT) || c.equals(BTC) ||  pairsForMarket.get(MARKET_QUOTE).contains(new Pair(MARKET_QUOTE, c));
 	}
 
 	@Override
