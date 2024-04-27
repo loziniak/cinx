@@ -18,6 +18,8 @@ public interface AsyncApi extends Api {
 
 	void retrievePriceHistory(Pair pair, TimeRange range, Consumer<PricesHistory.History> callback);
 	
+	boolean isBusy();
+	
 	public static OperationException handleException(Callable<Void> op) {
 		try {
 			op.call();

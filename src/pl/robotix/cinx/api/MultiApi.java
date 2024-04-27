@@ -69,6 +69,11 @@ public class MultiApi implements AsyncApi {
 	}
 	
 	@Override
+	public boolean isBusy() {
+		return baseApi.isBusy();
+	}
+	
+	@Override
 	public TimeValues timeValues(TimeRange range, Currency currency) {
 		return specificApis.get(new Pair(BTC, currency)).timeValues(range, currency);
 	}

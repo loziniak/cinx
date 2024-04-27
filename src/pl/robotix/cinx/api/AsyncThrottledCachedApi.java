@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -35,6 +36,7 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 	private Map<String, Object> cache = new ConcurrentHashMap<>();
 	private AtomicLong lastOpMillis;
 	private AtomicLong lastOpScheduledMillis;
+	private AtomicInteger busy = new AtomicInteger(0);
 
 	public AsyncThrottledCachedApi(SyncApi api, long timeoutMs, int maxRetries, int delayMs) {
 		this.api = api;
@@ -118,6 +120,10 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 		return api.timeValues(range, currency);
 	}
 	
+	@Override
+	public boolean isBusy() {
+		return busy.getPlain() > 0;
+	}
 	
 	
 	private <T> void asyncRunRecursive(Callable<T> operation, Consumer<T> callback, int depth, boolean timeout) {
@@ -130,6 +136,7 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 		Task<T> task = new Task<T>() {
 			@Override
 			protected T call() throws Exception {
+				busy.incrementAndGet();
 				T ret = operation.call();
 				return ret;
 			}
@@ -137,6 +144,7 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 			@Override
 			protected void succeeded() {
 				try {
+					busy.decrementAndGet();
 					callback.accept(get());
 				} catch (InterruptedException | ExecutionException e) {
 					throw new RuntimeException(e);
@@ -145,6 +153,7 @@ public class AsyncThrottledCachedApi implements AsyncApi {
 			
 			@Override
 			protected void failed() {
+				busy.decrementAndGet();
 				System.out.println(LocalTime.now().toString()+" failed.");
 				getException().printStackTrace();
 			}

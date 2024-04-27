@@ -82,5 +82,10 @@ public class SyncApiWrapper implements AsyncApi {
 	public TimeValues timeValues(TimeRange range, Currency c) {
 		return api.timeValues(range, c);
 	}
+	
+	@Override
+	public boolean isBusy() {
+		return false;
+	}
 
 }
