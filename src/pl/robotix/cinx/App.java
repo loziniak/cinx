@@ -24,6 +24,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -49,8 +50,6 @@ public class App extends Application {
 	private static final String LOG_FILE = "./operation.log";
 	private static final String CSS_FILE = "style.css";
 
-//	private static final String POLONIEX_APIKEY_ENV = "POLONIEX_APIKEY";
-//	private static final String POLONIEX_SECRET_ENV = "POLONIEX_SECRET";
 	private static final String BINANCE_APIKEY_ENV = "BINANCE_APIKEY";
 	private static final String BINANCE_SECRET_ENV = "BINANCE_SECRET";
 
@@ -72,8 +71,6 @@ public class App extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		primaryStage.setTitle("Cinx");
 		
-//		String poloniexApiKey = System.getenv(POLONIEX_APIKEY_ENV);
-//		String poloniexSecret = System.getenv(POLONIEX_SECRET_ENV);
 		String binanceApiKey = System.getenv(BINANCE_APIKEY_ENV);
 		String binanceSecret = System.getenv(BINANCE_SECRET_ENV);
 		
@@ -169,13 +166,24 @@ public class App extends Application {
 		
 		VBox bottomRight = new VBox(20);
 		
-		Button generateOperations = new Button("Generate operations");
+		Button generateOperations = new Button("Generate Operations");
 		generateOperations.setOnAction((event) -> {
 			trade.getTabPane().getSelectionModel().select(trade);
 			trader.generateOperations(api.takerFee());
 		});
+		
+		var selector = new CurrencySelector(wallet, chartCurrencies, highlightCurrency);
+		ToggleButton sortBySymbol = new ToggleButton("Sort By Symbol");
+		sortBySymbol.setOnAction(event -> {
+			if (((ToggleButton)event.getSource()).isSelected()) {
+				selector.sortByVolume();
+			} else {
+				selector.sortBySymbol();
+			}
+		});
 		bottomRight.getChildren().add(generateOperations);
-		bottomRight.getChildren().add(new CurrencySelector(wallet, chartCurrencies, highlightCurrency));
+		bottomRight.getChildren().add(sortBySymbol);
+		bottomRight.getChildren().add(selector);
 
 		HBox bottom = new HBox();
 		bottom.getChildren().add(new Graph(pricesHistory, highlightCurrency, operationLog));

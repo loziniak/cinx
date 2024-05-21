@@ -70,9 +70,7 @@ public class PricesHistory {
 			ArrayList<Point> walletHistory = new ArrayList<Point>();
 			if (!displayedCurrencies.isEmpty()) {
 				var wc = newValue;
-//				double[] percents = new double[wc.size()];
 				double[] amounts = new double[wc.size()];
-				ArrayList<double[]> values = new ArrayList<double[]>();
 				List<Point>[] histories = (List<Point>[]) new List[wc.size()];
 				int minHistSize = Integer.MAX_VALUE;
 

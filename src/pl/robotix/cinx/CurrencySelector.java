@@ -6,7 +6,10 @@ import static javafx.scene.layout.BorderStrokeStyle.SOLID;
 import static javafx.scene.paint.Color.RED;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -29,17 +32,30 @@ public class CurrencySelector extends FlowPane {
 	private static final Border HIGHLIGHT_BORDER = new Border(new BorderStroke(RED, SOLID, new CornerRadii(0), BORDER_WIDTH));
 
 	private static final Border DEFAULT_BORDER = new Border(new BorderStroke(null, NONE, new CornerRadii(0), BORDER_WIDTH));
+	
+	private static final Map<String, Currency> CURRENCIES = new HashMap<>();
+	private static final List<ToggleButton> BUTTONS = new ArrayList<>();
+	private static final Comparator<ToggleButton> BY_VOLUME = (b1, b2) -> 
+		App.prices.byVolume().compare(
+			CURRENCIES.get(b1.getText()),
+			CURRENCIES.get(b2.getText())
+		);
+	private static final Comparator<ToggleButton> BY_SYMBOL = (b1, b2) -> 
+		CURRENCIES.get(b1.getText()).symbol.compareTo(
+		CURRENCIES.get(b2.getText()).symbol);
 
+		
 	public CurrencySelector(Wallet wallet, ObservableSet<Currency> chartCurrencies, ObjectProperty<Currency> highlightCurrency) {
 		super();
 		setVgap(5);
 		setHgap(5);
 		
-		List<Currency> currencyList = new ArrayList<>(App.prices.getAllCurrencies());
-		currencyList.sort(App.prices.byVolume());
-		for (Currency c: currencyList) {
-			getChildren().add(currencyButton(c, wallet, chartCurrencies, highlightCurrency));
+		for (Currency c: App.prices.getAllCurrencies()) {
+			CURRENCIES.put(c.symbol, c);
+			BUTTONS.add(currencyButton(c, wallet, chartCurrencies, highlightCurrency));
 		}
+		BUTTONS.sort(BY_VOLUME);
+		getChildren().addAll(BUTTONS);
 
 		chartCurrencies.addListener((Change<? extends Currency> change) -> {
 			Currency added = change.getElementAdded();
@@ -53,10 +69,21 @@ public class CurrencySelector extends FlowPane {
 				.forEach(button -> {
 					if (change.wasAdded()) { button.selectedProperty().set(true); }
 
-					// FIXME: does not work when clicking "X" under the slider.
 					else if (change.wasRemoved()) { button.selectedProperty().set(false); }
 				});
 		});
+	}
+	
+	public void sortByVolume() {
+		getChildren().clear();
+		BUTTONS.sort(BY_VOLUME);
+		getChildren().addAll(BUTTONS);
+	}
+	
+	public void sortBySymbol() {
+		getChildren().clear();
+		BUTTONS.sort(BY_SYMBOL);
+		getChildren().addAll(BUTTONS);
 	}
 	
 	private ToggleButton currencyButton(final Currency currency, Wallet wallet, ObservableSet<Currency> chartCurrencies, ObjectProperty<Currency> highlightCurrency) {

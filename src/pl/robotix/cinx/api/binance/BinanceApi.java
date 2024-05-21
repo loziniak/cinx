@@ -62,7 +62,7 @@ public class BinanceApi implements SyncApi {
 	
 	private ExchangeInfo exchange;
 
-	private Map<Currency, Set<Pair>>  pairsForMarket;
+	private Map<Currency, Set<Pair>>  pairsForMarket = new HashMap<>();
 
 	private Account account;
 
