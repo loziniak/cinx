@@ -31,6 +31,8 @@ import pl.robotix.cinx.api.TimeValues;
 
 public class PricesHistory {
 	
+//	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.WEEK);
+//	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.TWO_MONTHS);
 	final ObjectProperty<TimeRange> timeRange = new SimpleObjectProperty<>(TimeRange.YEAR);
 	
 	final ObservableMap<Currency, List<Point>> displayedCurrencies = FXCollections.observableHashMap();
@@ -156,23 +158,24 @@ public class PricesHistory {
 		History longest = histories.get(0);
 		for (int i = 1; i < histories.size(); i++) {
 			History current = histories.get(i);
-			if (longest.timeValues.getPointsCount() < current.timeValues.getPointsCount()) {
+			if (longest.getCoveredSeconds() < current.getCoveredSeconds()) {
 				longest = current;
 			}
 		}
-		final History theLongest = longest;
 		ArrayList<Point> accumPriceHistory = initWithOnes(longest.timeValues);
+		TimeValues accumTimeVals = longest.timeValues;
 		histories.forEach((intermediateHistory) -> {
 //			System.out.println("intermediate: "+intermediateHistory.pair+" "+intermediateHistory.isVolumeSignificant);
-			double rate = ((double) theLongest.timeValues.getPointsCount()) / intermediateHistory.timeValues.getPointsCount();
+			double pointsRate = ((double) intermediateHistory.timeValues.getPointsCount()) / accumTimeVals.getPointsCount();
 
-			var ihCount = min((int) (intermediateHistory.points.size() * rate), accumPriceHistory.size());
-			var ihSmallerBy = accumPriceHistory.size() - ihCount;
+			var ihCount = min(intermediateHistory.getCoveredSeconds(), accumTimeVals.periodSeconds) / accumTimeVals.densitySeconds;
+			var ihSmallerBy = (int) (accumPriceHistory.size() - ihCount);
 
 			Point accum, interm;
 			for (int i = accumPriceHistory.size() - 1; i >= ihSmallerBy; i--) {
 				accum = accumPriceHistory.get(i);
-				interm = intermediateHistory.points.get((int) ((i - ihSmallerBy) / rate));
+				int i2 = (int) ((i - ihSmallerBy) * pointsRate);
+				interm = intermediateHistory.points.get(i2);
 
 				accum.price *= interm.price;
 				if (intermediateHistory.isVolumeSignificant) {
@@ -214,6 +217,10 @@ public class PricesHistory {
 			this.points = points;
 			this.isVolumeSignificant = isVolumeSignificant;
 			this.timeValues = timeValues;
+		}
+		
+		public long getCoveredSeconds() {
+			return (timeValues.periodSeconds * points.size()) / timeValues.getPointsCount(); 
 		}
 		
 		@Override

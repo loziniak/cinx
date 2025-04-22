@@ -65,8 +65,8 @@ public class BitMartApi implements SyncApi {
 	public void initTimeRanges() {
 		STEP_MINUTES.put(DAY, 15L);
 		STEP_MINUTES.put(WEEK, 60L);
-		STEP_MINUTES.put(TWO_MONTHS, 240L);
-		STEP_MINUTES.put(YEAR, 10080L);
+		STEP_MINUTES.put(TWO_MONTHS, 4L * 60L);
+		STEP_MINUTES.put(YEAR, 7L * 24L * 60L);
 		
 		TIME_VALUES.put(DAY, new TimeValues(DAY.seconds, STEP_MINUTES.get(DAY) * 60));
 		TIME_VALUES.put(WEEK, new TimeValues(WEEK.seconds, STEP_MINUTES.get(WEEK) * 60));

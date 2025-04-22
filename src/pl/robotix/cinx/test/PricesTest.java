@@ -1,16 +1,25 @@
 package pl.robotix.cinx.test;
 
+import static java.time.LocalDateTime.ofEpochSecond;
+import static java.time.ZoneOffset.UTC;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import pl.robotix.cinx.Currency;
 import pl.robotix.cinx.Pair;
+import pl.robotix.cinx.Point;
 import pl.robotix.cinx.Prices;
+import pl.robotix.cinx.api.TimeValues;
+import pl.robotix.cinx.graph.PricesHistory;
+import pl.robotix.cinx.graph.PricesHistory.History;
 
 public class PricesTest {
 	
@@ -39,26 +48,161 @@ public class PricesTest {
 		volumes.put(USDT_BTC, new BigDecimal("1.0"));
 		volumes.put(BTC_LTC, new BigDecimal("10.0"));
 		
-		Assert.assertEquals(null, new BigDecimal("1.32").doubleValue(),
+		assertEquals(null, new BigDecimal("1.32").doubleValue(),
 				new Prices(prices, volumes).getUSDFor(LTC).doubleValue(), 0.0001);
 		
-//		Assert.assertEquals(Arrays.asList(ETH_LTC, USDT_ETH),
+//		assertEquals(Arrays.asList(ETH_LTC, USDT_ETH),
 //				new Prices(prices, volumes).pairsToComputeUSDFor(LTC));
-		Assert.assertEquals(Arrays.asList(USDT_BTC, BTC_LTC),
+		assertEquals(Arrays.asList(USDT_BTC, BTC_LTC),
 				new Prices(prices, volumes).pairsToComputeUSDFor(LTC));
 
-		Assert.assertEquals(Arrays.asList(new Pair[] {}),
+		assertEquals(Arrays.asList(new Pair[] {}),
 				new Prices(prices, volumes).pairsToComputeUSDFor(USDT));
 
-		Assert.assertEquals(Arrays.asList(new Pair[] {}),
+		assertEquals(Arrays.asList(new Pair[] {}),
 				new Prices(prices, volumes).pairsToComputeBTCFor(BTC));
 
-		Assert.assertEquals(Arrays.asList(USDT_BTC.reverse()),
+		assertEquals(Arrays.asList(USDT_BTC.reverse()),
 				new Prices(prices, volumes).pairsToComputeBTCFor(USDT));
 
-		Assert.assertEquals(Arrays.asList(BTC_LTC),
+		assertEquals(Arrays.asList(BTC_LTC),
 				new Prices(prices, volumes).pairsToComputeBTCFor(LTC));
 
+	}
+	
+	@Test
+	public void combinesZero() {
+		History h1 = new History(BTC_LTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 0, 0)
+			), true, new TimeValues(1, 1));
+		
+		History h2 = new History(USDT_BTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 0, 0)
+			), false, new TimeValues(1, 1));
+		
+		ArrayList<Point> combined = PricesHistory.combine(Arrays.asList(h1, h2));
+
+		assertTrue("Zero histories", historyEquals(combined,
+				new Point(ofEpochSecond(0, 0, UTC), 0, 0)
+			));
+
+
+	}
+	
+	@Test
+	public void combinesSameLength() {
+		History h1 = new History(BTC_LTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 1, 5),
+				new Point(ofEpochSecond(0, 0, UTC), 2, 4),
+				new Point(ofEpochSecond(0, 0, UTC), 3, 3)
+			), true, new TimeValues(3, 1));
+		
+		History h2 = new History(USDT_BTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 10, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 30, 0)
+			), false, new TimeValues(3, 1));
+		
+		ArrayList<Point> combined = PricesHistory.combine(Arrays.asList(h1, h2));
+
+		assertTrue("Same length", historyEquals(combined,
+				new Point(ofEpochSecond(0, 0, UTC), 10, 5),
+				new Point(ofEpochSecond(0, 0, UTC), 40, 4),
+				new Point(ofEpochSecond(0, 0, UTC), 90, 3)
+			));
+	}
+	
+	@Test
+	public void combinesVariousLength() {
+		History h1 = new History(BTC_LTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 1, 5),
+				new Point(ofEpochSecond(0, 0, UTC), 2, 4)
+			), true, new TimeValues(3, 1));
+		
+		History h2 = new History(USDT_BTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 10, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 30, 0)
+			), false, new TimeValues(3, 1));
+		
+		ArrayList<Point> combined = PricesHistory.combine(Arrays.asList(h1, h2));
+
+		assertTrue("Same length", historyEquals(combined,
+				new Point(ofEpochSecond(0, 0, UTC), 10, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 5),
+				new Point(ofEpochSecond(0, 0, UTC), 60, 4)
+			));
+	}
+	
+	@Test
+	public void combinesVariousDensity() {
+		History h1 = new History(BTC_LTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 1, 10),
+				new Point(ofEpochSecond(0, 0, UTC), 2, 20),
+				new Point(ofEpochSecond(0, 0, UTC), 3, 30),
+				new Point(ofEpochSecond(0, 0, UTC), 4, 40)
+			), false, new TimeValues(7200, 1800));
+		
+		History h2 = new History(USDT_BTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 10, 1),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 2)
+			), true, new TimeValues(7200, 3600));
+		
+		ArrayList<Point> combined = PricesHistory.combine(Arrays.asList(h1, h2));
+
+		assertTrue("Same length", historyEquals(combined,
+				new Point(ofEpochSecond(0, 0, UTC), 10, 1),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 1),
+				new Point(ofEpochSecond(0, 0, UTC), 60, 2),
+				new Point(ofEpochSecond(0, 0, UTC), 80, 2)
+			));
+	}
+	
+	@Test
+	public void combinesVariousDensityAndLength() {
+		History h1 = new History(BTC_LTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 1, 10),
+				new Point(ofEpochSecond(0, 0, UTC), 2, 20),
+				new Point(ofEpochSecond(0, 0, UTC), 3, 30),
+				new Point(ofEpochSecond(0, 0, UTC), 4, 40),
+				new Point(ofEpochSecond(0, 0, UTC), 5, 50),
+				new Point(ofEpochSecond(0, 0, UTC), 6, 60)
+			), false, new TimeValues(10800, 1800));
+		
+		History h2 = new History(USDT_BTC, Arrays.asList(
+				new Point(ofEpochSecond(0, 0, UTC), 10, 1),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 2)
+			), true, new TimeValues(10800, 3600));
+		
+		ArrayList<Point> combined = PricesHistory.combine(Arrays.asList(h1, h2));
+
+		assertTrue("Same length", historyEquals(combined,
+				new Point(ofEpochSecond(0, 0, UTC), 10, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 20, 0),
+				new Point(ofEpochSecond(0, 0, UTC), 30, 1),
+				new Point(ofEpochSecond(0, 0, UTC), 40, 1),
+				new Point(ofEpochSecond(0, 0, UTC), 100, 2),
+				new Point(ofEpochSecond(0, 0, UTC), 120, 2)
+			));
+	}
+
+	private boolean historyEquals(ArrayList<Point> points, Point ...points2) {
+		if (points == null) { return points2 == null; }
+		else if (points2 == null) { return false; }
+		
+		if (points.size() != points2.length) { return false; }
+		
+		for (int i = 0; i < points.size(); i++) {
+			if (!equalValues(points.get(i), points2[i])) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private boolean equalValues(Point p1, Point p2) {
+		return p1.price == p2.price && p1.volume == p2.volume;
 	}
 
 }

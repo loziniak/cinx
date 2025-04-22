@@ -32,4 +32,12 @@ public class Point {
 		return String.valueOf(price);
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Point
+				&& date.equals(((Point) obj).date)
+				&& price == ((Point) obj).price
+				&& volume == ((Point) obj).volume;
+	}
+	
 }

@@ -53,7 +53,7 @@ public class Pair {
 	
 	@Override
 	public int hashCode() {
-		return base.hashCode() + quote.hashCode();
+		return base.hashCode() - quote.hashCode();
 	}
 
 }

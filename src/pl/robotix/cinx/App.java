@@ -79,7 +79,7 @@ public class App extends Application {
 		var binanceApi = new AsyncThrottledCachedApi(new BinanceApi(binanceApiKey, binanceSecret), 2000, 2, 100);
 		var multi = new MultiApi(binanceApi);
 //		multi.addApi(new AsyncThrottledCachedApi(new BitMartApi(), 2000, 2, 200));
-		multi.addApi(new SyncApiWrapper(new BitMartApi()));
+//		multi.addApi(new SyncApiWrapper(new BitMartApi()));
 		api = multi;
 //		api = new SyncApiWrapper(new BinanceApi(binanceApiKey, binanceSecret));
 		api.initTimeRanges();
